@@ -9,23 +9,17 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
 
     <script>
-        /* CONFIGURAÇÃO DE ACESSO */
-        const CHAVE_MESTRA = '7VCRIM_AM'; // Altere sua senha aqui
+        /* CONFIGURAÇÃO DE ACESSO SIMPLIFICADO */
+        const CHAVE_MESTRA = '7vcrim'; // <--- ALTERE SUA SENHA AQUI
         
         function verificarAcesso() {
-            let usuarioLogado = localStorage.getItem('7vcrim_acesso_valido');
-            if (!usuarioLogado) {
-                let email = prompt("ACESSO RESTRITO - 7ª VCRIM\nDigite seu e-mail institucional:");
-                if (email && email.includes("@tjam.jus.br")) {
-                    let senha = prompt("Digite a Chave de Acesso:");
-                    if (senha === CHAVE_MESTRA) {
-                        localStorage.setItem('7vcrim_acesso_valido', email);
-                    } else {
-                        alert("Chave incorreta!");
-                        window.location.href = "https://www.tjam.jus.br";
-                    }
+            let acessoValido = sessionStorage.getItem('7vcrim_logado');
+            if (!acessoValido) {
+                let senha = prompt("ACESSO RESTRITO - 7ª VCRIM\n\nPor favor, digite o Código de Acesso da Unidade:");
+                if (senha === CHAVE_MESTRA) {
+                    sessionStorage.setItem('7vcrim_logado', 'true');
                 } else {
-                    alert("E-mail inválido!");
+                    alert("Código incorreto! Acesso negado.");
                     window.location.href = "https://www.tjam.jus.br";
                 }
             }
@@ -94,7 +88,7 @@
         <h1>CENTRAL DE GESTÃO - 7ª VCRIM</h1>
         <p>7ª Vara Criminal da Comarca de Manaus/AM - TJAM</p>
     </div>
-    <span class="btn-logout" onclick="localStorage.removeItem('7vcrim_acesso_valido'); location.reload();">SAIR</span>
+    <span class="btn-logout" onclick="sessionStorage.removeItem('7vcrim_logado'); location.reload();">SAIR</span>
 </div>
 
 <h2>📂 Planilhas de Controle Interno</h2>
@@ -163,12 +157,6 @@
         <p>Justiça do Amazonas</p>
     </a>
 
-    <a href="https://www.jus.br/" target="_blank" class="card painel">
-        <div class="icon">🖥</div>
-        <h3>JUR BR</h3>
-        <p>BNMP 3.0 / SISBAJUD / RENAJUD</p>
-    </a>
-
     <a href="https://corregedoria.pje.jus.br/" target="_blank" class="card painel">
         <div class="icon">🔍</div>
         <h3>PJeCOR</h3>
@@ -179,6 +167,12 @@
         <div class="icon">🗂</div>
         <h3>Malote Digital</h3>
         <p>Comunicações Oficiais</p>
+    </a>
+
+    <a href="https://helpdesk.tjam.jus.br/" target="_blank" class="card painel">
+        <div class="icon">✔</div>
+        <h3>HelpDesk</h3>
+        <p>Chamados TI</p>
     </a>
 </div>
 

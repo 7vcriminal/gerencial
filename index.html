@@ -6,25 +6,25 @@
     <title>Dashboard 7VCRIM</title>
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
 
     <script>
-        /* CONFIGURAÇÃO DE ACESSO SIMPLIFICADO */
-        const CHAVE_MESTRA = '7VCRIM2026'; // <--- ALTERE SUA SENHA AQUI
-        
-        function verificarAcesso() {
-            let acessoValido = sessionStorage.getItem('7vcrim_logado');
-            if (!acessoValido) {
-                let senha = prompt("ACESSO RESTRITO - 7ª VCRIM\n\nPor favor, digite o Código de Acesso da Unidade:");
-                if (senha === CHAVE_MESTRA) {
-                    sessionStorage.setItem('7vcrim_logado', 'true');
+        /* CHAVE ÚNICA DE ACESSO */
+        const CHAVE_CORRETA = '7VCRIM2026'; 
+
+        function validarEntrada() {
+            // Verifica se já validou nesta sessão
+            if (sessionStorage.getItem('autorizado') !== 'sim') {
+                let tentativa = prompt("ACESSO RESTRITO - 7ª VCRIM\n\nDigite a Chave de Acesso:");
+                
+                if (tentativa === CHAVE_CORRETA) {
+                    sessionStorage.setItem('autorizado', 'sim');
                 } else {
-                    alert("Código incorreto! Acesso negado.");
+                    alert("Chave Inválida!");
                     window.location.href = "https://www.tjam.jus.br";
                 }
             }
         }
-        verificarAcesso();
+        validarEntrada();
     </script>
 
     <style>
@@ -74,9 +74,10 @@
 
         hr { border: 0; height: 1px; background: #ddd; margin: 8px 0; flex-shrink: 0; }
 
-        .btn-logout { 
+        .btn-sair { 
             position: absolute; right: 15px; color: rgba(255,255,255,0.6); 
-            font-size: 0.6em; cursor: pointer; text-decoration: none;
+            font-size: 0.6em; cursor: pointer; border: 1px solid rgba(255,255,255,0.3);
+            padding: 2px 5px; border-radius: 4px;
         }
     </style>
 </head>
@@ -88,7 +89,7 @@
         <h1>CENTRAL DE GESTÃO - 7ª VCRIM</h1>
         <p>7ª Vara Criminal da Comarca de Manaus/AM - TJAM</p>
     </div>
-    <span class="btn-logout" onclick="sessionStorage.removeItem('7vcrim_logado'); location.reload();">SAIR</span>
+    <span class="btn-sair" onclick="sessionStorage.clear(); location.reload();">SAIR</span>
 </div>
 
 <h2>📂 Planilhas de Controle Interno</h2>
@@ -96,25 +97,22 @@
     <a href="https://controledepresos.vercel.app/" target="_blank" class="card planilha">
         <div class="icon">⚠</div>
         <h3>Réus Presos</h3>
-        <p>Sistema Interno de Controle de Réus Presos</p>
+        <p>Sistema Interno de Controle</p>
     </a>
-    
-    <a href="https://docs.google.com/spreadsheets/d/1LozQsVXfHeAynbmxHw7BrQnSnt8X-KeLeeNcsPbnuwM/edit#gid=1339148447" target="_blank" class="card planilha">
+    <a href="https://docs.google.com/spreadsheets/d/1LozQsVXfHeAynbmxHw7BrQnSnt8X-KeLeeNcsPbnuwM/edit" target="_blank" class="card planilha">
         <div class="icon">⛓️</div>
         <h3>Controle Processual</h3>
-        <p>Presos, Idosos, Precatórias e BNMP</p>
+        <p>Presos, Idosos e BNMP</p>
     </a>
-
-    <a href="https://docs.google.com/spreadsheets/d/12OBexxe-2ygvTBzXJIBTN1ftnc3_rnWxlFV3CDQLTKY/edit#gid=2013631584" target="_blank" class="card planilha">
+    <a href="https://docs.google.com/spreadsheets/d/12OBexxe-2ygvTBzXJIBTN1ftnc3_rnWxlFV3CDQLTKY/edit" target="_blank" class="card planilha">
         <div class="icon">⚖</div>
-        <h3>Acervo sem Sentença</h3>
-        <p>Meta 1 sem Julgamento</p>
+        <h3>Acervo Meta 1</h3>
+        <p>Processos sem Sentença</p>
     </a>
-
-    <a href="https://docs.google.com/spreadsheets/d/125RHPF2lCnjed5RrE-JkpHPoTKAlC53bRUWC0Ul9q-M/edit#gid=1693823226" target="_blank" class="card planilha">
+    <a href="https://docs.google.com/spreadsheets/d/125RHPF2lCnjed5RrE-JkpHPoTKAlC53bRUWC0Ul9q-M/edit" target="_blank" class="card planilha">
         <div class="icon">🗓</div>
         <h3>Audiências 2026</h3>
-        <p>Pauta de Audiências 2026</p>
+        <p>Pauta Atualizada</p>
     </a>
 </div>
 
@@ -127,23 +125,20 @@
         <h3>Metas CNJ</h3>
         <p>Painel de Metas Nacionais</p>
     </a>
-
-    <a href="https://app.powerbi.com/view?r=eyJrIjoiNjA2MjQ4YmYtM2YxMy00NGUxLWFiMDgtZmU3MGY1NWZjYTAxIiwidCI6IjcyNzEwODAyLTlhMzMtNGQyZC1hMDU1LTMzZDMxY2I0N2Q2MSJ9" target="_blank" class="card painel">
+    <a href="https://app.powerbi.com/view?r=eyJrIjoiNjA2MjQ4YmYtM2YxMy00NGUxLWFiMDgtZmU3MGY1NWZjYTAxI..." target="_blank" class="card painel">
         <div class="icon">🌡</div>
         <h3>IAD e TCL</h3>
-        <p>Indicadores de Congestionamento</p>
+        <p>Índices de Congestionamento</p>
     </a>
-
-    <a href="https://app.powerbi.com/view?r=eyJrIjoiYWI5ODZlZDAtOGE5NS00ZGMzLThkZmUtZWZiYzYzZDAwNzAzIiwidCI6IjcyNzEwODAyLTlhMzMtNGQyZC1hMDU1LTMzZDMxY2I0N2Q2MSJ9" target="_blank" class="card painel">
+    <a href="https://app.powerbi.com/view?r=eyJrIjoiYWI5ODZlZDAtOGE5NS00ZGMzLThkZmUtZWZiYzYzZDAwNzAzI..." target="_blank" class="card painel">
         <div class="icon">⏲</div>
         <h3>Tempo APN</h3>
-        <p>Painel BI Tempo de Ações Penais</p>
+        <p>Duração Ações Penais</p>
     </a>
-
-    <a href="https://app.powerbi.com/view?r=eyJrIjoiNmQ2NTUzYzQtZmM3Mi00NDYxLTkyZTYtYmUzNjZjMDcwOTgxIiwidCI6IjcyNzEwODAyLTlhMzMtNGQyZC1hMDU1LTMzZDMxY2I0N2Q2MSJ9" target="_blank" class="card painel">
+    <a href="https://app.powerbi.com/view?r=eyJrIjoiNmQ2NTUzYzQtZmM3Mi00NDYxLTkyZTYtYmUzNjZjMDcwOTgxI..." target="_blank" class="card painel">
         <div class="icon">🐢</div>
         <h3>Paralisados</h3>
-        <p>Processos sem movimentação</p>
+        <p>Processos sem Movimento</p>
     </a>
 </div>
 
@@ -156,19 +151,16 @@
         <h3>PROJUDI</h3>
         <p>Justiça do Amazonas</p>
     </a>
-
     <a href="https://corregedoria.pje.jus.br/" target="_blank" class="card painel">
         <div class="icon">🔍</div>
         <h3>PJeCOR</h3>
         <p>Sistema da CGJ</p>
     </a>
-
     <a href="https://malotedigital.tjam.jus.br/" target="_blank" class="card painel">
         <div class="icon">🗂</div>
         <h3>Malote Digital</h3>
         <p>Comunicações Oficiais</p>
     </a>
-
     <a href="https://helpdesk.tjam.jus.br/" target="_blank" class="card painel">
         <div class="icon">✔</div>
         <h3>HelpDesk</h3>

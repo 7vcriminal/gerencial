@@ -7,27 +7,37 @@
     <link rel="icon" type="image/png" href="logo.png">
 
     <script>
-        // CONFIGURAÇÃO DA CHAVE - DIGITE EXATAMENTE ASSIM
-        const CHAVE_CORRETA = "7crim"; 
+        (function() {
+            const CHAVE_CORRETA = "7crim"; 
 
-        function acessar() {
-            let logado = sessionStorage.getItem("7vcrim_logado");
-            if (logado !== "sim") {
-                let senha = prompt("ACESSO RESTRITO - 7ª VARA CRIMINAL\nDigite o código de acesso:");
-                if (senha === CHAVE_CORRETA) {
-                    sessionStorage.setItem("7vcrim_logado", "sim");
-                } else {
-                    alert("Código Inválido!");
-                    location.reload(); // Recarrega para pedir de novo
+            function iniciarAcesso() {
+                if (sessionStorage.getItem("7vcrim_logado") !== "sim") {
+                    let senha = prompt("ACESSO RESTRITO - 7ª VARA CRIMINAL\nDigite o código de acesso:");
+                    
+                    // Se o usuário clicar em cancelar ou deixar vazio
+                    if (senha === null) {
+                        window.location.href = "https://www.tjam.jus.br";
+                        return;
+                    }
+
+                    // Normaliza a entrada: tira espaços e deixa em minúsculo
+                    let senhaLimpa = senha.trim().toLowerCase();
+
+                    if (senhaLimpa === CHAVE_CORRETA) {
+                        sessionStorage.setItem("7vcrim_logado", "sim");
+                    } else {
+                        alert("Código Inválido!");
+                        location.reload();
+                    }
                 }
             }
-        }
-        acessar();
+            iniciarAcesso();
+        })();
     </script>
 
     <style>
         * { box-sizing: border-box; }
-        html, body { height: 100vh; margin: 0; padding: 10px; overflow: hidden; font-family: sans-serif; background: #f4f7f9; display: flex; flex-direction: column; }
+        html, body { height: 100vh; margin: 0; padding: 10px; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #f4f7f9; display: flex; flex-direction: column; }
         .header { background: linear-gradient(135deg, #1a2a6c, #b21f1f); color: white; padding: 10px; border-radius: 8px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 20px; flex-shrink: 0; position: relative; }
         .logo-header { max-height: 45px; }
         .header h1 { margin: 0; font-size: 1.3em; }
@@ -37,7 +47,7 @@
         .card:hover { transform: translateY(-3px); border-bottom-color: #b21f1f; }
         .planilha { border-bottom-color: #27ae60; }
         .painel { border-bottom-color: #2980b9; }
-        .card h3 { margin: 5px 0; font-size: 0.85em; }
+        .card h3 { margin: 5px 0; font-size: 0.85em; font-weight: bold; }
         .card p { font-size: 0.7em; color: #666; margin: 0; }
         .icon { font-size: 1.5em; margin-bottom: 5px; }
         hr { border: 0; height: 1px; background: #ddd; margin: 10px 0; }

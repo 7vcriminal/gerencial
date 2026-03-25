@@ -2,140 +2,46 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>7VCRIM - Gestão</title>
+    <title>Dashboard 7VCRIM</title>
     <link rel="icon" type="image/png" href="logo.png">
-
+    
+    <link rel="apple-touch-icon" href="logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
-        /* Base e Otimização para Tela Cheia */
-        * { box-sizing: border-box; }
-        html, body { 
-            height: 100vh; 
-            margin: 0; 
-            padding: 10px; 
-            overflow: hidden; 
-            font-family: 'Segoe UI', Tahoma, sans-serif; 
+        /* Base e Cores Judiciárias */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background-color: #f4f7f9; 
-            display: flex; 
-            flex-direction: column; 
+            margin: 0; 
+            padding: 30px; 
+            color: #333;
         }
-
-        /* Cabeçalho Institucional Slim */
+        
+        /* Cabeçalho Institucional */
         .header { 
             background: linear-gradient(135deg, #1a2a6c, #b21f1f); 
             color: white; 
-            padding: 10px; 
-            border-radius: 8px; 
+            padding: 30px; 
+            border-radius: 12px; 
             text-align: center; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 20px; 
-            flex-shrink: 0; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            margin-bottom: 40px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        .logo-header { max-height: 45px; filter: drop-shadow(1px 1px 3px rgba(0,0,0,0.3)); }
-        .header h1 { margin: 0; font-size: 1.3em; letter-spacing: 1px; }
-        .header p { margin: 0; font-size: 0.8em; opacity: 0.9; }
+        .logo-header {
+            max-height: 50px;
+            margin-bottom: 15px;
+            /* Filtro para garantir que o brasão apareça bem sobre o fundo escuro */
+            filter: drop-shadow(1px 1px 3px rgba(0,0,0,0.3));
+        }
+
+        .header h1 { margin: 10px 0 5px 0; font-size: 2em; letter-spacing: 1px; }
+        .header p { margin: 0; font-weight: 300; opacity: 0.9; }
 
         /* Títulos das Seções */
         h2 { 
             color: #1a2a6c; 
-            border-left: 4px solid #b21f1f; 
-            padding-left: 10px; 
-            margin: 15px 0 5px 0; 
-            font-size: 0.9em; 
-            text-transform: uppercase; 
-            flex-shrink: 0;
-        }
-
-        /* Grid de 4 Colunas */
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 10px; 
-            flex: 1; 
-            min-height: 0; 
-        }
-
-        /* Estilo dos Cards */
-        .card { 
-            background: white; 
-            border-radius: 8px; 
-            padding: 10px; 
-            text-align: center; 
-            text-decoration: none; 
-            color: #333; 
-            border: 1px solid #ddd; 
-            border-bottom: 4px solid #ccc; 
-            transition: 0.2s;
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center;
-        }
-
-        .card:hover { transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); border-bottom-color: #b21f1f; }
-        .planilha { border-bottom-color: #27ae60; } /* Verde */
-        .painel { border-bottom-color: #2980b9; }   /* Azul */
-
-        .card h3 { margin: 5px 0; font-size: 0.85em; font-weight: bold; }
-        .card p { font-size: 0.7em; color: #666; margin: 0; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .icon { font-size: 1.6em; margin-bottom: 5px; }
-
-        hr { border: 0; height: 1px; background: #ddd; margin: 10px 0; flex-shrink: 0; }
-        
-        /* Ajuste para Mobile */
-        @media (max-width: 768px) {
-            .grid { grid-template-columns: repeat(2, 1fr); }
-            body { overflow-y: auto; height: auto; }
-        }
-    </style>
-</head>
-<body>
-
-<div class="header">
-    <img src="logo.png" alt="TJAM" class="logo-header">
-    <div>
-        <h1>CENTRAL DE GESTÃO - 7ª VCRIM</h1>
-        <p>Tribunal de Justiça do Amazonas</p>
-    </div>
-</div>
-
-<h2>📂 Controle Interno (Planilhas)</h2>
-<div class="grid">
-    <a href="https://controledepresos.vercel.app/" target="_blank" class="card planilha">
-        <div class="icon">⚠</div><h3>Réus Presos</h3><p>Sistema Interno de Controle</p>
-    </a>
-    <a href="https://docs.google.com/spreadsheets/d/1LozQsVXfHeAynbmxHw7BrQnSnt8X-KeLeeNcsPbnuwM/edit" target="_blank" class="card planilha">
-        <div class="icon">⛓️</div><h3>Controle Processual</h3><p>Presos, Idosos e BNMP</p>
-    </a>
-    <a href="https://docs.google.com/spreadsheets/d/12OBexxe-2ygvTBzXJIBTN1ftnc3_rnWxlFV3CDQLTKY/edit" target="_blank" class="card planilha">
-        <div class="icon">⚖</div><h3>Acervo Meta 1</h3><p>Processos sem Sentença</p>
-    </a>
-    <a href="https://docs.google.com/spreadsheets/d/125RHPF2lCnjed5RrE-JkpHPoTKAlC53bRUWC0Ul9q-M/edit" target="_blank" class="card planilha">
-        <div class="icon">🗓</div><h3>Audiências 2026</h3><p>Pauta Atualizada</p>
-    </a>
-</div>
-
-<hr>
-
-<h2>📊 Indicadores e Sistemas Oficiais</h2>
-<div class="grid">
-    <a href="http://metas.tjam.jus.br/index.xhtml" target="_blank" class="card painel">
-        <div class="icon">🏛️</div><h3>Metas CNJ</h3><p>Acompanhamento Nacional</p>
-    </a>
-    <a href="https://projudi.tjam.jus.br/projudi/" target="_blank" class="card painel">
-        <div class="icon">💻</div><h3>PROJUDI</h3><p>Sistema Principal</p>
-    </a>
-    <a href="https://corregedoria.pje.jus.br/" target="_blank" class="card painel">
-        <div class="icon">🔍</div><h3>PJeCOR</h3><p>Sistema da Corregedoria</p>
-    </a>
-    <a href="https://malotedigital.tjam.jus.br/" target="_blank" class="card painel">
-        <div class="icon">🗂</div><h3>Malote Digital</h3><p>Expedientes Oficiais</p>
-    </a>
-</div>
-
-</body>
-</html>
+            border-left: 6px solid #b21f1f; 
+            padding-left: 15px; 
+            margin: 40px 0 20px 0; 
+            font-size: 1.5em;

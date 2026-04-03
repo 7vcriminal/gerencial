@@ -94,7 +94,6 @@
             color: var(--primary-color);
             font-size: 1.5rem;
             font-weight: 600;
-            /* MELHORIA 2: Margens reduzidas (antes era 2.5rem no topo e 1.5rem embaixo) */
             margin: 1.5rem 0 1rem 0; 
             display: flex;
             align-items: center;
@@ -107,7 +106,6 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 1.5rem;
-            /* MELHORIA 2: Margem inferior adicionada na grid para substituir o <br><br> */
             margin-bottom: 1.5rem;
         }
 
@@ -237,13 +235,11 @@
             .header { padding: 1.5rem 1rem; margin-bottom: 1.5rem; }
             .header h1 { font-size: 1.4rem; }
             
-            /* MELHORIA 1: Cards lado a lado no mobile */
             .grid-container { 
-                grid-template-columns: repeat(3, 1fr); /* Divide a tela em 2 colunas */
-                gap: 0.75rem; /* Gap menor para caber na tela do celular */
+                grid-template-columns: repeat(2, 1fr); 
+                gap: 0.75rem; 
             }
             
-            /* Ajustes finos nos cards para que o conteúdo caiba nas 2 colunas do celular */
             .card { padding: 1.2rem 0.8rem; }
             .icon-wrapper { width: 45px; height: 45px; font-size: 1.4rem; margin-bottom: 0.8rem; }
             .card h3 { font-size: 0.9rem; margin-bottom: 0.3rem; }
@@ -267,11 +263,14 @@
         <a href="https://projudi.tjam.jus.br/projudi/" target="_blank" rel="noopener noreferrer" class="quick-btn">
             <i class="fas fa-laptop-code"></i> PROJUDI
         </a>
+         <a href="https://mail.google.com/mail/u/0/?tab=rm&ogbl#inbox" target="_blank" rel="noopener noreferrer" class="quick-btn">
+            <i class="fas fa-envelope"></i> E-mail
+        </a>
         <a href="https://malotedigital.tjam.jus.br/" target="_blank" rel="noopener noreferrer" class="quick-btn">
             <i class="fas fa-envelopes-bulk"></i> Malote Digital
         </a>
         <a href="https://www.jus.br/" target="_blank" rel="noopener noreferrer" class="quick-btn">
-            <i class="fas fa-server"></i> JUR BR
+            <i class="fas fa-server"></i> JUS BR
         </a>
         <a href="https://corregedoria.pje.jus.br/" target="_blank" rel="noopener noreferrer" class="quick-btn">
             <i class="fas fa-magnifying-glass"></i> PJeCOR
@@ -292,6 +291,7 @@
                 sectionIcon: "fa-folder-open",
                 items: [
                     { title: "Réus Presos", desc: "Sistema Interno de Controle de Réus Presos", link: "https://controle-reus-tjam.web.app/", type: "planilha", icon: "fa-handcuffs" },
+                    { title: "Diário de Secretaria", desc: "Uso exclusivo do Diretor de Secretaria", link: "https://diario-secretaria-v2.web.app/", type: "planilha", icon: "fa-book-open" },
                     { title: "Controle Processual", desc: "Idosos, Cartas Precatórias e Mandados", link: "https://docs.google.com/spreadsheets/d/1LozQsVXfHeAynbmxHw7BrQnSnt8X-KeLeeNcsPbnuwM/edit", type: "planilha", icon: "fa-scale-balanced" },
                     { title: "Acervo sem Sentença", desc: "Processos da Meta 1 sem Julgamento", link: "https://docs.google.com/spreadsheets/d/12OBexxe-2ygvTBzXJIBTN1ftnc3_rnWxlFV3CDQLTKY/edit", type: "planilha", icon: "fa-gavel" },
                     { title: "Tempo APN", desc: "Processos por tempo de tramitação", link: "file:///Z:/SuaPasta/Reus_Presos.xlsx", type: "planilha", icon: "fa-hourglass-half" },
@@ -321,7 +321,7 @@
                 sectionIcon: "fa-globe",
                 items: [
                     { title: "PROJUDI", desc: "Processo Eletrônico do Amazonas", link: "https://projudi.tjam.jus.br/projudi/", type: "sistema", icon: "fa-laptop-code" },
-                    { title: "JUR BR", desc: "BNMP / SEEU / SISBAJUD", link: "https://www.jus.br/", type: "sistema", icon: "fa-server" },
+                    { title: "JUS BR", desc: "BNMP / SEEU / SISBAJUD", link: "https://www.jus.br/", type: "sistema", icon: "fa-server" },
                     { title: "PJeCOR", desc: "Sistema Processual da CGJ", link: "https://corregedoria.pje.jus.br/", type: "sistema", icon: "fa-magnifying-glass" },
                     { title: "Malote Digital", desc: "Envio e Recebimento de Docs", link: "https://malotedigital.tjam.jus.br/", type: "sistema", icon: "fa-envelopes-bulk" },
                     { title: "Site TJAM", desc: "Portal do TJAM", link: "https://www.tjam.jus.br/", type: "sistema", icon: "fa-building-columns" },
@@ -355,7 +355,6 @@
                     `;
                 });
 
-                /* MELHORIA 2: <br><br> removido. O espaçamento agora é controlado pelo margin-bottom do CSS */
                 htmlContent += `</div>`; 
             });
 

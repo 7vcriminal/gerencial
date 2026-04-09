@@ -25,7 +25,7 @@
             --text-main: #2d3748;
             --text-muted: #718096;
             --card-bg: #ffffff;
-            --color-planilha: #d97706; /* Alterado para um âmbar/laranja suave */
+            --color-planilha: #27ae60; /* Revertido para o verde suave original */
             --color-painel: #2980b9;
             --color-sistema: #8e44ad;
             --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
@@ -170,7 +170,7 @@
             transition: var(--transition);
         }
 
-        .card.planilha .icon-wrapper { color: var(--color-planilha); background: #fef3c7; } /* Fundo âmbar clarinho */
+        .card.planilha .icon-wrapper { color: var(--color-planilha); background: #e8f5e9; } /* Fundo verde clarinho original */
         .card.painel .icon-wrapper { color: var(--color-painel); background: #e3f2fd; }
         .card.sistema .icon-wrapper { color: var(--color-sistema); background: #f3e5f5; }
 
@@ -293,9 +293,10 @@
                 sectionTitle: "Planilhas e Sistemas Interno",
                 sectionIcon: "fa-folder-open",
                 items: [
-                    { title: "Réus Presos", desc: "Sistema Interno de Controle de Réus Presos", link: "https://reus-presos-eight.vercel.app/", type: "planilha", icon: "fa-handcuffs" },
-                    { title: "Diário de Secretaria", desc: "Uso exclusivo do Diretor de Secretaria", link: "https://diario-secretaria-kappa.vercel.app/", type: "planilha", icon: "fa-book-open" },
-                    { title: "Cálculo de Suspensão e Prescrição", desc: "Ferramenta de cálculo / Pena Abstrata", link: "https://7vcriminal.github.io/calculadora-prescricao/", type: "planilha", icon: "fa-calculator" },
+                    { title: "Réus Presos", desc: "Sistema Interno de Controle de Réus Presos", link: "https://controle-reus-tjam.web.app/", type: "planilha", icon: "fa-handcuffs" },
+                    { title: "Diário de Secretaria", desc: "Uso exclusivo do Diretor de Secretaria", link: "https://diario-secretaria-v2.web.app/", type: "planilha", icon: "fa-book-open" },
+                    { title: "Cálculo de Suspensão e Prescrição", desc: "Ferramenta de cálculo / Pena Abstrata", link: "https://7vcrim.github.io/calculadora-prescricao/", type: "planilha", icon: "fa-calculator" },
+                    { title: "Sistema de Resumo AIJ", desc: "Assistente de Resumo Processual para Audiências", link: "https://resumo-processual-aij.web.app/", type: "planilha", icon: "fa-wand-magic-sparkles" },
                     { title: "Controle Processual", desc: "Idosos, Cartas Precatórias e Mandados", link: "https://docs.google.com/spreadsheets/d/1LozQsVXfHeAynbmxHw7BrQnSnt8X-KeLeeNcsPbnuwM/edit", type: "planilha", icon: "fa-scale-balanced" },
                     { title: "Acervo sem Sentença", desc: "Processos da Meta 1 sem Julgamento", link: "https://docs.google.com/spreadsheets/d/12OBexxe-2ygvTBzXJIBTN1ftnc3_rnWxlFV3CDQLTKY/edit", type: "planilha", icon: "fa-gavel" },
                     { title: "Tempo APN", desc: "Processos por tempo de tramitação", link: "file:///Z:/SuaPasta/Reus_Presos.xlsx", type: "planilha", icon: "fa-hourglass-half" },

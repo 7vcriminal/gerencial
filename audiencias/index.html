@@ -397,6 +397,15 @@
             <i class="fas fa-search"></i>
             <input type="text" id="search-input" placeholder="Buscar por processo, réu, magistrado...">
         </div>
+        <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap">
+            <label style="font-size:0.78rem;font-weight:700;color:var(--muted);white-space:nowrap">De:</label>
+            <input type="date" id="filter-data-de" style="padding:0.55rem 0.7rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.85rem;color:var(--text)">
+            <label style="font-size:0.78rem;font-weight:700;color:var(--muted);white-space:nowrap">Até:</label>
+            <input type="date" id="filter-data-ate" style="padding:0.55rem 0.7rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.85rem;color:var(--text)">
+            <button class="filter-btn" onclick="limparDatas()" title="Limpar datas" style="padding:0.5rem 0.7rem">
+                <i class="fas fa-xmark"></i>
+            </button>
+        </div>
         <select id="filter-status">
             <option value="">Todos os status</option>
             <option value="Realizada/Concluída">Realizada/Concluída</option>
@@ -410,6 +419,9 @@
         </select>
         <button class="filter-btn" id="btn-preso-filter" onclick="togglePresFilter()">
             <i class="fas fa-handcuffs"></i> Réu Preso
+        </button>
+        <button class="filter-btn" onclick="gerarPDF()" style="background:#fff3cd;color:#92400e;border-color:#fcd34d;margin-left:auto">
+            <i class="fas fa-file-pdf"></i> Exportar PDF
         </button>
     </div>
 
@@ -642,6 +654,8 @@ let currentAno  = 2026;
 let currentMes  = 'Todos';
 let filterStatus = '';
 let filterMagistrado = '';
+let filterDataDe = '';
+let filterDataAte = '';
 let filterPreso  = false;
 let activeCard   = 'total';
 let searchTerm   = '';
@@ -723,6 +737,8 @@ function getFiltered() {
             if (filterStatus !== 'Pendente' && a.status !== filterStatus) return false;
         }
         if (filterMagistrado && a.magistrado !== filterMagistrado) return false;
+        if (filterDataDe  && a.data && a.data < filterDataDe)  return false;
+        if (filterDataAte && a.data && a.data > filterDataAte) return false;
         if (searchTerm) {
             const t = searchTerm.toLowerCase();
             if (![a.processo, a.reu, a.magistrado, a.promotor, a.pendencias].some(v => (v||'').toLowerCase().includes(t))) return false;
@@ -938,6 +954,14 @@ function filterByCard(card) {
 document.getElementById('search-input').addEventListener('input', e => { searchTerm = e.target.value; render(); });
 document.getElementById('filter-status').addEventListener('change', e => { filterStatus = e.target.value; activeCard = 'total'; render(); });
 document.getElementById('filter-magistrado').addEventListener('change', e => { filterMagistrado = e.target.value; render(); });
+document.getElementById('filter-data-de').addEventListener('change',  e => { filterDataDe  = e.target.value; render(); });
+document.getElementById('filter-data-ate').addEventListener('change', e => { filterDataAte = e.target.value; render(); });
+function limparDatas() {
+    filterDataDe = filterDataAte = '';
+    document.getElementById('filter-data-de').value = '';
+    document.getElementById('filter-data-ate').value = '';
+    render();
+}
 
 // ─── LOTE DE HORÁRIOS ────────────────────────────────────────────────────────
 
@@ -1305,6 +1329,109 @@ function renderRelatorios() {
             options:{responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true}}}
         });
     } else { wrapper.style.display='none'; }
+}
+
+// ─── EXPORTAR PDF ────────────────────────────────────────────────────────────
+
+function gerarPDF() {
+    const filtered = getFiltered();
+    if (!filtered.length) { showToast('Nenhuma audiência para exportar', 'error'); return; }
+
+    const descFiltros = [];
+    if (currentAno !== 'Historico') descFiltros.push(`Ano: ${currentAno}`);
+    if (currentMes !== 'Todos')     descFiltros.push(`Mês: ${currentMes}`);
+    if (filterDataDe)  descFiltros.push(`De: ${fmtData(filterDataDe)}`);
+    if (filterDataAte) descFiltros.push(`Até: ${fmtData(filterDataAte)}`);
+    if (filterStatus)  descFiltros.push(`Status: ${filterStatus}`);
+    if (filterMagistrado) descFiltros.push(`Magistrado: ${filterMagistrado}`);
+    if (filterPreso)   descFiltros.push('Réus Presos');
+    if (searchTerm)    descFiltros.push(`Busca: "${searchTerm}"`);
+    if (activeCard !== 'total') descFiltros.push(`Card: ${activeCard}`);
+
+    const linhas = filtered.map(a => `
+        <tr class="${a.reuPreso ? 'preso' : ''}">
+            <td>${fmtData(a.data)}</td>
+            <td>${a.hora || '--:--'}</td>
+            <td>${a.reu || '—'}</td>
+            <td>${a.reuPreso ? 'Preso' : 'Solto'}</td>
+            <td class="mono">${a.processo || '—'}</td>
+            <td>${a.magistrado || '—'}</td>
+            <td>${a.promotor || '—'}</td>
+            <td>${a.status || 'Pendente'}</td>
+            <td>${a.projudi ? '✓' : '○'}</td>
+            <td>${a.intimacoes ? '✓' : '○'}</td>
+            <td>${a.termo ? '✓' : '○'}</td>
+            <td>${a.pendencias || ''}</td>
+        </tr>`).join('');
+
+    const html = `<!DOCTYPE html><html lang="pt-br"><head>
+<meta charset="UTF-8">
+<title>Audiências - Relatório</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Arial', sans-serif; font-size: 11px; color: #1a1a1a; padding: 20px; }
+    .cabecalho { border-bottom: 3px solid #1a2a6c; padding-bottom: 10px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .cab-titulo h1 { font-size: 15px; color: #1a2a6c; font-weight: 700; }
+    .cab-titulo p { font-size: 10px; color: #666; margin-top: 2px; }
+    .cab-meta { text-align: right; font-size: 9px; color: #888; }
+    .filtros { background: #f0f4f8; border-radius: 4px; padding: 6px 10px; margin-bottom: 10px; font-size: 9.5px; color: #444; }
+    .filtros strong { color: #1a2a6c; }
+    .resumo { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .resumo-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 10px; font-size: 9.5px; }
+    .resumo-item strong { display: block; font-size: 14px; color: #1a2a6c; }
+    table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+    thead th { background: #1a2a6c; color: white; padding: 5px 6px; text-align: left; font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid #e8ecf0; }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+    tbody tr.preso { background: #fff5f5; }
+    tbody tr.preso:nth-child(even) { background: #ffe8e8; }
+    td { padding: 4px 6px; vertical-align: top; }
+    td.mono { font-family: monospace; font-size: 8.5px; }
+    .rodape { margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 8px; font-size: 8.5px; color: #999; display: flex; justify-content: space-between; }
+    @media print {
+        body { padding: 10px; }
+        @page { margin: 15mm; size: A4 landscape; }
+        thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        tbody tr.preso { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+</style></head><body>
+<div class="cabecalho">
+    <div class="cab-titulo">
+        <h1>Pauta de Audiências · 7ª Vara Criminal</h1>
+        <p>Comarca de Manaus · Tribunal de Justiça do Amazonas</p>
+    </div>
+    <div class="cab-meta">
+        Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}<br>
+        Total de registros: <strong>${filtered.length}</strong>
+    </div>
+</div>
+${descFiltros.length ? `<div class="filtros"><strong>Filtros aplicados:</strong> ${descFiltros.join(' · ')}</div>` : ''}
+<div class="resumo">
+    ${(() => { const s = countStats(filtered);
+        return [['Total',s.total,'#1a2a6c'],['Realizadas',s.realizada,'#27ae60'],
+                ['Redesignadas',s.redesignada,'#f39c12'],['Pendentes',s.pendente,'#2980b9'],
+                ['Canceladas',s.cancelada,'#e74c3c'],['Presos',s.preso,'#b21f1f']]
+        .map(([l,v,c]) => `<div class="resumo-item"><strong style="color:${c}">${v}</strong>${l}</div>`).join(''); })()}
+</div>
+<table>
+    <thead><tr>
+        <th>Data</th><th>Hora</th><th>Réu(s)</th><th>Preso</th>
+        <th>Processo</th><th>Magistrado</th><th>Promotor</th><th>Status</th>
+        <th>PROJ</th><th>INTM</th><th>TERMO</th><th>Pendências</th>
+    </tr></thead>
+    <tbody>${linhas}</tbody>
+</table>
+<div class="rodape">
+    <span>7ª Vara Criminal · TJAM · Sistema de Gestão de Audiências</span>
+    <span>Documento gerado automaticamente · ${new Date().toLocaleDateString('pt-BR')}</span>
+</div>
+</body></html>`;
+
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => { w.print(); }, 400);
 }
 
 // ─── TOAST ───────────────────────────────────────────────────────────────────

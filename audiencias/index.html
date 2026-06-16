@@ -152,7 +152,6 @@
         tbody tr.slot-row:hover { background: #dcfce7; }
         td { padding: 0.4rem 0.55rem; font-size: 0.74rem; color: var(--text); vertical-align: middle; }
         td.processo { font-size: 0.74rem; font-weight: 700; color: var(--text); white-space: nowrap; }
-        td.reu { font-weight: 600; max-width: 200px; }
         td.hora, td.data { white-space: nowrap; }
         td.hora { font-weight: 600; }
         .badge-preso { display: inline-flex; align-items: center; gap: 4px; background: #fdecea; color: var(--red); padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; }
@@ -187,8 +186,8 @@
 
         /* PENDÊNCIAS NA TABELA */
         td.pendencias-col { font-size: 0.78rem; color: var(--muted); max-width: 180px; white-space: pre-wrap; word-break: break-word; line-height: 1.4; }
-        td.reu { font-weight: 600; max-width: 200px; }
-        td.reu .reu-nome { white-space: nowrap; line-height: 1.5; display: block; }
+        td.reu { font-weight: 600; max-width: 160px; word-break: break-word; }
+        td.reu .reu-nome { display: flex; align-items: center; gap: 5px; line-height: 1.5; white-space: normal; }
         td.magistrado, td.promotor { white-space: nowrap; }
 
         .actions-cell { white-space: nowrap; }
@@ -920,8 +919,7 @@ function renderTable(filtered) {
         <tr class="${a.reuPreso?'preso-row':''} ${slot?'slot-row':''} ${al.length?'has-alert':''}" onclick="openModal(${a.id})" style="cursor:pointer">
             <td class="data">${fmtData(a.data)}${showAno?`<br><small style="color:var(--muted)">${a.ano||2026}</small>`:''}</td>
             <td class="hora">${a.hora||'--:--'}</td>
-            <td class="reu">${slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu ? a.reu.split(' / ').map(n=>`<span class="reu-nome">${n}</span>`).join('') : '—')
-                }${!slot && a.reuPreso ? '<span class="badge-preso" style="margin-top:3px;display:inline-flex"><i class="fas fa-handcuffs"></i> Preso</span>' : ''}</td>
+            <td class="reu">${slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu ? a.reu.split(' / ').map((n,i) => `<span class="reu-nome">${n}${i===0 && a.reuPreso ? ' <span class="badge-preso"><i class="fas fa-handcuffs"></i></span>' : ''}</span>`).join('') : '—')}</td>
             <td class="processo">${a.processo||'<span style="color:#cbd5e0;font-style:italic">— aguardando —</span>'}</td>
             <td class="magistrado">${a.magistrado||'—'}</td>
             <td class="promotor" style="font-size:0.8rem;color:var(--muted)">${a.promotor||'—'}</td>

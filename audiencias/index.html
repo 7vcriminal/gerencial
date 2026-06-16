@@ -917,7 +917,7 @@ function renderTable(filtered) {
         <tr class="${a.reuPreso?'preso-row':''} ${slot?'slot-row':''} ${al.length?'has-alert':''}" onclick="openModal(${a.id})" style="cursor:pointer">
             <td class="data">${fmtData(a.data)}${showAno?`<br><small style="color:var(--muted)">${a.ano||2026}</small>`:''}</td>
             <td class="hora">${a.hora||'--:--'}</td>
-            <td class="reu">${slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu ? a.reu.split(' / ').map((n, i) => { const preso = a.reusPreso ? a.reusPreso[i] : (a.reuPreso && i===0); return `<span class="reu-nome">${preso ? '<span class="badge-preso" style="flex-shrink:0"><i class="fas fa-handcuffs"></i></span> ' : ''}${n}</span>`; }).join('') : '—')}</td>
+            <td class="reu">${slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu ? a.reu.split(' / ').map((n, i) => { const preso = a.reusPreso ? a.reusPreso[i] : (a.reuPreso && i===0); return `<span class="reu-nome" ${preso?'style="color:var(--red)"':''}>${preso ? '<span class="badge-preso" style="flex-shrink:0"><i class="fas fa-handcuffs"></i></span> ' : ''}${n}</span>`; }).join('') : '—')}</td>
             <td class="processo">${a.processo||'<span style="color:#cbd5e0;font-style:italic">— aguardando —</span>'}</td>
             <td class="magistrado">${a.magistrado||'—'}</td>
             <td class="promotor" style="font-size:0.8rem;color:var(--muted)">${a.promotor||'—'}</td>

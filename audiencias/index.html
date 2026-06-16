@@ -1158,7 +1158,7 @@ function gerarLote() {
         });
     });
     saveData();
-    currentAno = ano; currentMes = 'Todos';
+    currentAno = ano; currentMes = mes;
     render();
     showToast(`${horarios.length} horários criados em ${fmtData(data)}!`, 'success');
     document.getElementById('lote-preview').style.display = 'none';

@@ -1608,20 +1608,20 @@ function _imprimirPDF(filtered, cols) {
     if (activeCard !== 'total') descFiltros.push(`Card: ${activeCard}`);
 
     const th = id => show(id) ? `<th>${cols.find(c=>c.id===id).label}</th>` : '';
-    const td = (id, val) => show(id) ? `<td>${val}</td>` : '';
+    const td = (id, val, cls='') => show(id) ? `<td${cls?' class="'+cls+'"':''}>${val}</td>` : '';
 
     const linhas = filtered.map(a => `
         <tr class="${a.reuPreso ? 'preso' : ''}">
             ${td('col-data', fmtData(a.data))}
             ${td('col-hora', a.hora || '--:--')}
-            ${td('col-reu', (a.reu || '—') + (a.reuPreso ? ' 🔒' : ''))}
+            ${td('col-reu', (a.reu ? a.reu.split(' / ').join('<br>') : '—') + (a.reuPreso ? ' 🔒' : ''))}
             ${td('col-processo', `<strong>${a.processo || '—'}</strong>`)}
             ${td('col-magistrado', a.magistrado || '—')}
             ${td('col-promotor', a.promotor || '—')}
             ${td('col-status', a.status || 'Pendente')}
-            ${td('col-proj', a.projudi ? '✓' : '○')}
-            ${td('col-intm', a.intimacoes ? '✓' : '○')}
-            ${td('col-termo', a.termo ? '✓' : '○')}
+            ${td('col-proj', a.projudi ? '✓' : '○', 'center')}
+            ${td('col-intm', a.intimacoes ? '✓' : '○', 'center')}
+            ${td('col-termo', a.termo ? '✓' : '○', 'center')}
             ${td('col-pendencias', a.pendencias || '')}
         </tr>`).join('');
 
@@ -1641,12 +1641,13 @@ function _imprimirPDF(filtered, cols) {
     .resumo-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 10px; font-size: 10px; }
     .resumo-item strong { display: block; font-size: 15px; color: #1a2a6c; }
     table { width: 100%; border-collapse: collapse; font-size: 11px; }
-    thead th { background: #1a2a6c; color: white; padding: 6px 7px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; font-family: inherit; }
+    thead th { background: #1a2a6c; color: white; padding: 6px 7px; text-align: center; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; font-family: inherit; }
     tbody tr { border-bottom: 1px solid #e2e8f0; }
     tbody tr:nth-child(even) { background: #f8fafc; }
     tbody tr.preso { background: #fff5f5; }
     tbody tr.preso:nth-child(even) { background: #ffe8e8; }
     td { padding: 5px 7px; vertical-align: top; font-family: inherit; }
+    td.center { text-align: center; }
     .rodape { margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 8px; font-size: 9px; color: #999; display: flex; justify-content: space-between; }
     @media print {
         body { padding: 10px; }

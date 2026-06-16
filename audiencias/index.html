@@ -182,6 +182,7 @@
 
         /* PENDÊNCIAS NA TABELA */
         td.pendencias-col { font-size: 0.78rem; color: var(--muted); max-width: 180px; white-space: pre-wrap; word-break: break-word; line-height: 1.4; }
+        td.reu { font-weight: 600; max-width: 200px; white-space: pre-line; line-height: 1.4; }
 
         .actions-cell { white-space: nowrap; }
         .btn-edit, .btn-del { border: none; border-radius: 6px; cursor: pointer; padding: 0.3rem 0.6rem; font-size: 0.8rem; transition: var(--transition); }
@@ -230,9 +231,12 @@
         /* CADASTRO MODAL (magistrados/promotores) */
         .modal.modal-sm { max-width: 480px; }
         .cadastro-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
-        .cadastro-item { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.9rem; }
+        .cadastro-item { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.9rem; gap: 0.5rem; }
         .cadastro-item.inativo { opacity: 0.5; text-decoration: line-through; }
-        .cadastro-item-actions { display: flex; gap: 0.4rem; }
+        .cadastro-item-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+        .cadastro-item-nome { flex: 1; }
+        .cadastro-item-nome input { width: 100%; padding: 0.3rem 0.5rem; border: 1px solid var(--primary); border-radius: 6px; font-family: inherit; font-size: 0.9rem; }
+        .filter-btn.active-alerta { background: #fef2f2; color: var(--red); border-color: var(--red); }
         .cadastro-add-row { display: flex; gap: 0.5rem; }
         .cadastro-add-row input { flex: 1; padding: 0.55rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 0.9rem; }
         .cadastro-add-row input:focus { outline: none; border-color: var(--primary); }
@@ -433,6 +437,9 @@
         <button class="filter-btn" id="btn-preso-filter" onclick="togglePresFilter()">
             <i class="fas fa-handcuffs"></i> Réu Preso
         </button>
+        <button class="filter-btn" id="btn-alerta-filter" onclick="toggleAlertaFilter()">
+            <i class="fas fa-triangle-exclamation"></i> Alertas <span id="alerta-count-btn" style="margin-left:3px;background:#fecaca;border-radius:50px;padding:0.05rem 0.45rem;font-size:0.7rem"></span>
+        </button>
         <button class="filter-btn" onclick="gerarPDF()" style="background:#fff3cd;color:#92400e;border-color:#fcd34d;margin-left:auto">
             <i class="fas fa-file-pdf"></i> Exportar PDF
         </button>
@@ -458,7 +465,7 @@
                     <th class="no-sort toggle-col" title="PROJUDI">PROJ</th>
                     <th class="no-sort toggle-col" title="Intimações">INTM</th>
                     <th class="no-sort toggle-col" title="Termo">TERMO</th>
-                    <th class="no-sort">Pendências</th>
+                    <th class="no-sort">Anotações</th>
                     <th class="no-sort">Ações</th>
                 </tr>
             </thead>
@@ -671,6 +678,7 @@ let filterMagistrado = '';
 let filterDataDe = '';
 let filterDataAte = '';
 let filterPreso  = false;
+let filterAlerta = false;
 let activeCard   = 'total';
 let searchTerm   = '';
 let sortField    = 'data';
@@ -728,7 +736,7 @@ function getDataScoped() {
 }
 function getFiltered() {
     return getDataScoped().filter(a => {
-        if (!a.data) return false; // sem data: ocultar de filtros e impressão
+        if (!a.data && !filterAlerta) return false; // sem data: ocultar salvo quando filtro de alertas ativo
         if (currentMes !== 'Todos' && a.mes !== currentMes) return false;
         if (filterPreso && !a.reuPreso) return false;
         // card filter
@@ -754,6 +762,7 @@ function getFiltered() {
         if (filterMagistrado && a.magistrado !== filterMagistrado) return false;
         if (filterDataDe  && a.data && a.data < filterDataDe)  return false;
         if (filterDataAte && a.data && a.data > filterDataAte) return false;
+        if (filterAlerta && getAlertas(a).length === 0) return false;
         if (searchTerm) {
             const t = searchTerm.toLowerCase();
             if (![a.processo, a.reu, a.magistrado, a.promotor, a.pendencias].some(v => (v||'').toLowerCase().includes(t))) return false;
@@ -888,7 +897,7 @@ function renderTable(filtered) {
         <tr class="${a.reuPreso?'preso-row':''} ${slot?'slot-row':''} ${al.length?'has-alert':''}" onclick="openModal(${a.id})" style="cursor:pointer">
             <td class="data">${fmtData(a.data)}${showAno?`<br><small style="color:var(--muted)">${a.ano||2026}</small>`:''}</td>
             <td class="hora">${a.hora||'--:--'}</td>
-            <td class="reu">${slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu||'—')}</td>
+            <td class="reu">${slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : ((a.reu||'').replace(/ \/ /g,'\n')||'—')}</td>
             <td>${slot ? '—' : (a.reuPreso
                 ? '<span class="badge-preso"><i class="fas fa-handcuffs"></i> Preso</span>'
                 : '<span class="badge-solto"><i class="fas fa-check"></i> Solto</span>')}</td>
@@ -941,18 +950,25 @@ function diasDiff(iso) {
 }
 
 function getAlertas(a) {
-    if (!a.data) return [];
     const alertas = [];
-    const diff = diasDiff(a.data); // dias desde a audiência (positivo = já passou)
 
-    // Status pendente há 5+ dias (audiência já passou)
+    // Sem data: audiência cadastrada mas ainda não datada
+    if (!a.data) {
+        const diffCriacao = diasDiff(a.criadoEm);
+        if (diffCriacao !== null && diffCriacao >= 1) alertas.push('semdata');
+        return alertas;
+    }
+
+    const diff = diasDiff(a.data); // positivo = já passou
+
+    // Status pendente há 5+ dias após a audiência
     if (!a.status && diff >= 5) alertas.push('status');
 
-    // PROJUDI não marcado 5+ dias após a data da audiência
+    // PROJUDI não marcado 5+ dias após o cadastro
     const diffCriacao = diasDiff(a.criadoEm || a.data);
     if (!a.projudi && diffCriacao >= 5) alertas.push('projudi');
 
-    // Intimações: não marcadas e faltam ≤15 dias para a audiência (ou já passou e não foi feita)
+    // Intimações: não marcadas e faltam ≤15 dias para a audiência
     if (!a.intimacoes && diff >= -15 && diff <= 1) alertas.push('intimacoes');
 
     // Termo: não marcado e já se passaram 2+ dias da audiência
@@ -962,17 +978,32 @@ function getAlertas(a) {
 }
 
 function renderAlertaBanner() {
-    const totalAlertas = getDataScoped().filter(a => a.data && getAlertas(a).length > 0).length;
+    const total = getDataScoped().filter(a => getAlertas(a).length > 0).length;
+    // Atualiza contador no botão filtro
+    const countBtn = document.getElementById('alerta-count-btn');
+    if (countBtn) countBtn.textContent = total > 0 ? total : '';
+
     let banner = document.getElementById('alerta-banner');
     if (!banner) {
         banner = document.createElement('div');
         banner.id = 'alerta-banner';
-        banner.style.cssText = 'display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius);padding:0.75rem 1.25rem;margin-bottom:1rem;font-size:0.85rem;font-weight:600;color:#b91c1c;display:flex;align-items:center;gap:0.6rem;';
+        banner.style.cssText = 'background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius);padding:0.75rem 1.25rem;margin-bottom:1rem;font-size:0.85rem;font-weight:600;color:#b91c1c;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;';
         document.getElementById('view-agenda').insertBefore(banner, document.querySelector('.mes-tabs'));
     }
-    if (totalAlertas > 0) {
+    if (total > 0) {
         banner.style.display = 'flex';
-        banner.innerHTML = `<i class="fas fa-triangle-exclamation"></i> ${totalAlertas} audiência${totalAlertas>1?'s requerem':'requer'} atenção — verifique os indicadores <span style="background:#fecaca;border-radius:50px;padding:0.1rem 0.5rem">${totalAlertas}</span> na tabela.`;
+        const semData  = getDataScoped().filter(a => getAlertas(a).includes('semdata')).length;
+        const pendente = getDataScoped().filter(a => getAlertas(a).includes('status')).length;
+        const proj     = getDataScoped().filter(a => getAlertas(a).includes('projudi')).length;
+        const intm     = getDataScoped().filter(a => getAlertas(a).includes('intimacoes')).length;
+        const termo    = getDataScoped().filter(a => getAlertas(a).includes('termo')).length;
+        const items = [];
+        if (semData)  items.push(`<span style="background:#fecaca;border-radius:4px;padding:0.1rem 0.5rem">${semData} sem data</span>`);
+        if (pendente) items.push(`<span style="background:#fecaca;border-radius:4px;padding:0.1rem 0.5rem">${pendente} pendente ${pendente>1?'há':'há'} 5+ dias</span>`);
+        if (proj)     items.push(`<span style="background:#fff3cd;color:#92400e;border-radius:4px;padding:0.1rem 0.5rem">${proj} PROJUDI pendente</span>`);
+        if (intm)     items.push(`<span style="background:#fff9e6;color:#92400e;border-radius:4px;padding:0.1rem 0.5rem">${intm} intimação urgente</span>`);
+        if (termo)    items.push(`<span style="background:#e8eaf6;color:#3730a3;border-radius:4px;padding:0.1rem 0.5rem">${termo} termo pendente</span>`);
+        banner.innerHTML = `<i class="fas fa-triangle-exclamation"></i> <strong>${total} audiências</strong> requerem atenção: ${items.join(' ')}`;
     } else {
         banner.style.display = 'none';
     }
@@ -1037,6 +1068,12 @@ function filterByCard(card) {
     document.getElementById('filter-status').value = '';
     filterPreso = card === 'preso' && activeCard === 'preso';
     document.getElementById('btn-preso-filter').classList.toggle('active-preso', filterPreso);
+    render();
+}
+
+function toggleAlertaFilter() {
+    filterAlerta = !filterAlerta;
+    document.getElementById('btn-alerta-filter').classList.toggle('active-alerta', filterAlerta);
     render();
 }
 
@@ -1297,15 +1334,40 @@ function renderCadastroList() {
         return;
     }
     document.getElementById('cadastro-list').innerHTML = list.map((item, i) => `
-        <div class="cadastro-item ${item.ativo?'':'inativo'}">
-            <span>${item.nome}</span>
+        <div class="cadastro-item ${item.ativo?'':'inativo'}" id="cadastro-item-${i}">
+            <span class="cadastro-item-nome" id="cadastro-nome-${i}">${item.nome}</span>
             <div class="cadastro-item-actions">
+                <button class="btn-edit" onclick="editCadastroItem(${i})" title="Renomear"><i class="fas fa-pen"></i></button>
                 <button class="btn-edit" onclick="toggleCadastroAtivo(${i})" title="${item.ativo?'Desativar':'Ativar'}">
                     <i class="fas fa-${item.ativo?'eye-slash':'eye'}"></i>
                 </button>
                 <button class="btn-del" onclick="removeCadastroItem(${i})" title="Remover"><i class="fas fa-trash"></i></button>
             </div>
         </div>`).join('');
+}
+
+function editCadastroItem(i) {
+    const list = cadastroSection==='magistrados' ? magistrados : promotores;
+    const span = document.getElementById(`cadastro-nome-${i}`);
+    if (!span) return;
+    const current = list[i].nome;
+    span.innerHTML = `<input type="text" value="${current}" style="flex:1;padding:2px 6px;border:1px solid var(--primary);border-radius:4px;font-size:0.9rem"
+        onblur="saveCadastroEdit(${i},this.value)"
+        onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value='${current}';this.blur();}">`;
+    span.querySelector('input').focus();
+}
+
+function saveCadastroEdit(i, novoNome) {
+    novoNome = novoNome.trim();
+    const list = cadastroSection==='magistrados' ? magistrados : promotores;
+    if (!novoNome || novoNome === list[i].nome) { renderCadastroList(); return; }
+    if (list.some((x, j) => j!==i && x.nome.toLowerCase()===novoNome.toLowerCase())) {
+        showToast('Nome já cadastrado','error'); renderCadastroList(); return;
+    }
+    list[i].nome = novoNome;
+    saveCadastros();
+    renderCadastroList();
+    showToast('Nome atualizado!','success');
 }
 
 function addCadastroItem() {

@@ -74,16 +74,45 @@
         .stat-card.preso .stat-value     { color: var(--secondary); }
         .stat-hint { font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
 
-        /* QUICK ADD BAR */
-        .quick-add-bar { background: var(--card-bg); border-radius: var(--radius); padding: 1rem 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 0.75rem; border-left: 4px solid var(--green); }
-        .quick-add-bar h3 { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
-        .quick-add-fields { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: flex-end; }
-        .quick-field { display: flex; flex-direction: column; gap: 0.25rem; }
-        .quick-field label { font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
-        .quick-field input, .quick-field select { padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 0.88rem; color: var(--text); min-width: 120px; }
-        .quick-field input:focus, .quick-field select:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(39,174,96,0.15); }
-        .btn-quick-add { display: flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.2rem; border-radius: 8px; background: var(--green); color: white; border: none; font-family: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: var(--transition); white-space: nowrap; align-self: flex-end; }
-        .btn-quick-add:hover { background: #219a52; }
+        /* LOTE PANEL */
+        .lote-panel { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 0.75rem; border-left: 4px solid var(--green); overflow: hidden; }
+        .lote-header { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1.5rem; cursor: pointer; user-select: none; }
+        .lote-header h3 { font-size: 0.82rem; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.5rem; margin: 0; }
+        .lote-header .lote-toggle { font-size: 0.8rem; color: var(--muted); transition: var(--transition); }
+        .lote-body { padding: 0 1.5rem 1.25rem; display: none; }
+        .lote-body.open { display: block; }
+        .lote-fields { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1rem; }
+        .lf { display: flex; flex-direction: column; gap: 0.25rem; }
+        .lf label { font-size: 0.7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+        .lf input, .lf select { padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 0.88rem; color: var(--text); min-width: 100px; }
+        .lf input:focus, .lf select:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(39,174,96,0.15); }
+        .lf.lf-wide { min-width: 180px; }
+        .lote-preview { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.75rem; display: none; }
+        .lote-preview-title { font-size: 0.75rem; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 0.5rem; }
+        .lote-preview-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .lote-preview-item { background: white; border: 1px solid #bbf7d0; border-radius: 6px; padding: 0.2rem 0.6rem; font-size: 0.8rem; font-weight: 600; color: #059669; }
+        .lote-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .btn-gerar { display: flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.2rem; border-radius: 8px; background: var(--green); color: white; border: none; font-family: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .btn-gerar:hover { background: #219a52; }
+        .btn-preview { display: flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1rem; border-radius: 8px; background: white; color: var(--green); border: 1px solid var(--green); font-family: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .btn-preview:hover { background: #f0fdf4; }
+
+        /* PREENCHER MODAL */
+        .modal.modal-preencher { max-width: 500px; }
+        .preencher-info { background: #f0fdf4; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; gap: 1.5rem; flex-wrap: wrap; }
+        .preencher-info-item { display: flex; flex-direction: column; gap: 0.1rem; }
+        .preencher-info-label { font-size: 0.7rem; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 0.4px; }
+        .preencher-info-value { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+        .reus-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .reu-row { display: flex; gap: 0.5rem; align-items: center; }
+        .reu-row input { flex: 1; padding: 0.55rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text); transition: var(--transition); }
+        .reu-row input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,42,108,0.1); }
+        .btn-rem-reu { background: #fdecea; color: var(--red); border: none; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 0.8rem; flex-shrink: 0; transition: var(--transition); }
+        .btn-rem-reu:hover { background: var(--red); color: white; }
+        .btn-add-reu { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.9rem; border-radius: 8px; background: white; color: var(--primary); border: 1px dashed var(--primary); font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .btn-add-reu:hover { background: #eef1fb; }
+        .btn-editar-completo { display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0; background: white; font-family: inherit; font-size: 0.85rem; font-weight: 600; color: var(--muted); cursor: pointer; transition: var(--transition); }
+        .btn-editar-completo:hover { background: #f0f4f8; color: var(--text); }
 
         /* TOOLBAR */
         .toolbar { background: var(--card-bg); border-radius: var(--radius); padding: 1rem 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
@@ -229,9 +258,10 @@
             .charts-grid { grid-template-columns: 1fr; }
             .chart-card--wide { grid-column: 1; }
             .nav-bar { flex-direction: column; align-items: flex-start; }
-            .quick-add-fields { flex-direction: column; }
-            .quick-field input, .quick-field select { min-width: unset; width: 100%; }
-            .btn-quick-add { width: 100%; justify-content: center; }
+            .lote-fields { flex-direction: column; }
+            .lf input, .lf select { min-width: unset; width: 100%; }
+            .btn-gerar, .btn-preview { width: 100%; justify-content: center; }
+            .preencher-info { gap: 0.75rem; }
         }
     </style>
 </head>
@@ -302,38 +332,60 @@
         </div>
     </div>
 
-    <!-- QUICK ADD -->
-    <div class="quick-add-bar">
-        <h3><i class="fas fa-clock" style="color:var(--green)"></i> Adicionar Horário na Pauta</h3>
-        <div class="quick-add-fields">
-            <div class="quick-field">
-                <label>Ano</label>
-                <select id="q-ano"></select>
+    <!-- PAINEL CRIAÇÃO EM LOTE -->
+    <div class="lote-panel">
+        <div class="lote-header" onclick="toggleLote()">
+            <h3><i class="fas fa-calendar-plus"></i> Criar Horários em Lote</h3>
+            <span class="lote-toggle" id="lote-toggle-icon"><i class="fas fa-chevron-down"></i></span>
+        </div>
+        <div class="lote-body" id="lote-body">
+            <div class="lote-fields">
+                <div class="lf">
+                    <label>Ano</label>
+                    <select id="q-ano"></select>
+                </div>
+                <div class="lf">
+                    <label>Mês</label>
+                    <select id="q-mes">
+                        <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
+                        <option>Abril</option><option>Maio</option><option>Junho</option>
+                        <option>Julho</option><option>Agosto</option><option>Setembro</option>
+                        <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
+                    </select>
+                </div>
+                <div class="lf">
+                    <label>Data</label>
+                    <input type="date" id="q-data">
+                </div>
+                <div class="lf">
+                    <label>Hora Inicial</label>
+                    <input type="time" id="q-hora" value="08:30">
+                </div>
+                <div class="lf">
+                    <label>Intervalo (min)</label>
+                    <input type="number" id="q-intervalo" value="30" min="5" max="180" style="width:90px">
+                </div>
+                <div class="lf">
+                    <label>Quantidade</label>
+                    <input type="number" id="q-qtd" value="10" min="1" max="50" style="width:90px">
+                </div>
+                <div class="lf lf-wide">
+                    <label>Magistrado</label>
+                    <select id="q-magistrado"></select>
+                </div>
+                <div class="lf lf-wide">
+                    <label>Promotoria</label>
+                    <select id="q-promotor"></select>
+                </div>
             </div>
-            <div class="quick-field">
-                <label>Mês</label>
-                <select id="q-mes">
-                    <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
-                    <option>Abril</option><option>Maio</option><option>Junho</option>
-                    <option>Julho</option><option>Agosto</option><option>Setembro</option>
-                    <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
-                </select>
+            <div class="lote-preview" id="lote-preview">
+                <div class="lote-preview-title"><i class="fas fa-eye"></i> Prévia dos horários</div>
+                <div class="lote-preview-list" id="lote-preview-list"></div>
             </div>
-            <div class="quick-field">
-                <label>Data</label>
-                <input type="date" id="q-data">
+            <div class="lote-actions">
+                <button class="btn-preview" onclick="previewLote()"><i class="fas fa-eye"></i> Visualizar</button>
+                <button class="btn-gerar" onclick="gerarLote()"><i class="fas fa-calendar-plus"></i> <span id="btn-gerar-label">Gerar Horários</span></button>
             </div>
-            <div class="quick-field">
-                <label>Hora</label>
-                <input type="time" id="q-hora" value="08:30">
-            </div>
-            <div class="quick-field">
-                <label>Magistrado</label>
-                <select id="q-magistrado"></select>
-            </div>
-            <button class="btn-quick-add" onclick="quickAddSlot()">
-                <i class="fas fa-plus"></i> Adicionar Horário
-            </button>
         </div>
     </div>
 
@@ -428,6 +480,37 @@
         </div>
     </div>
 </section>
+
+<!-- MODAL: PREENCHER SLOT -->
+<div class="modal-overlay" id="preencher-modal">
+    <div class="modal modal-preencher">
+        <div class="modal-header">
+            <h2><i class="fas fa-pen-to-square" style="color:var(--green)"></i> Preencher Audiência</h2>
+            <button class="btn-close" onclick="closePreencher()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="p-id">
+            <div class="preencher-info" id="preencher-info"></div>
+            <div class="form-group" style="margin-bottom:1rem">
+                <label style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px">Nº do Processo</label>
+                <input type="text" id="p-processo" placeholder="0000000-00.0000.8.04.1000"
+                    style="padding:0.6rem 0.75rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.9rem;width:100%">
+            </div>
+            <div class="form-group">
+                <label style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;display:flex;justify-content:space-between;align-items:center">
+                    <span>Réu(s)</span>
+                </label>
+                <div class="reus-list" id="reus-list"></div>
+                <button class="btn-add-reu" onclick="addReuRow()"><i class="fas fa-plus"></i> Adicionar réu</button>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-editar-completo" id="btn-editar-completo"><i class="fas fa-sliders"></i> Edição completa</button>
+            <button class="btn-cancel-modal" onclick="closePreencher()">Cancelar</button>
+            <button class="btn-save" style="background:var(--green)" onclick="salvarPreencher()"><i class="fas fa-save"></i> Salvar</button>
+        </div>
+    </div>
+</div>
 
 <!-- MODAL: EDITAR AUDIÊNCIA -->
 <div class="modal-overlay" id="form-modal">
@@ -709,9 +792,11 @@ function buildMagistradoFilter() {
 }
 
 function buildSelectores() {
-    // Quick add - magistrado
+    // Quick add - magistrado e promotor
     const magOpts = magistrados.filter(m => m.ativo).map(m => `<option value="${m.nome}">${m.nome}</option>`).join('');
     document.getElementById('q-magistrado').innerHTML = '<option value="">— Magistrado —</option>' + magOpts;
+    const proOptsQ = promotores.filter(p => p.ativo).map(p => `<option value="${p.nome}">${p.nome}</option>`).join('');
+    document.getElementById('q-promotor').innerHTML = '<option value="">— Promotoria —</option>' + proOptsQ;
 
     // Form modal - magistrado
     document.getElementById('f-magistrado').innerHTML = '<option value="">— Selecione —</option>' + magOpts;
@@ -854,31 +939,64 @@ document.getElementById('search-input').addEventListener('input', e => { searchT
 document.getElementById('filter-status').addEventListener('change', e => { filterStatus = e.target.value; activeCard = 'total'; render(); });
 document.getElementById('filter-magistrado').addEventListener('change', e => { filterMagistrado = e.target.value; render(); });
 
-// ─── QUICK ADD SLOT ──────────────────────────────────────────────────────────
+// ─── LOTE DE HORÁRIOS ────────────────────────────────────────────────────────
+
+function toggleLote() {
+    const body = document.getElementById('lote-body');
+    const icon = document.getElementById('lote-toggle-icon');
+    const open = body.classList.toggle('open');
+    icon.innerHTML = open ? '<i class="fas fa-chevron-up"></i>' : '<i class="fas fa-chevron-down"></i>';
+}
 
 document.getElementById('q-data').addEventListener('change', e => {
     const d = new Date(e.target.value + 'T12:00:00');
     if (!isNaN(d)) document.getElementById('q-mes').value = MESES[d.getMonth()];
 });
 
-function quickAddSlot() {
+function calcLoteHorarios() {
+    const horaInicial = document.getElementById('q-hora').value || '08:30';
+    const intervalo   = parseInt(document.getElementById('q-intervalo').value) || 30;
+    const qtd         = Math.min(parseInt(document.getElementById('q-qtd').value) || 10, 50);
+    const [h, m]      = horaInicial.split(':').map(Number);
+    let minutos       = h * 60 + m;
+    const horarios    = [];
+    for (let i = 0; i < qtd; i++) {
+        horarios.push(`${String(Math.floor(minutos / 60)).padStart(2,'0')}:${String(minutos % 60).padStart(2,'0')}`);
+        minutos += intervalo;
+    }
+    return horarios;
+}
+
+function previewLote() {
+    const horarios = calcLoteHorarios();
+    const preview  = document.getElementById('lote-preview');
+    document.getElementById('lote-preview-list').innerHTML =
+        horarios.map(h => `<span class="lote-preview-item"><i class="fas fa-clock"></i> ${h}</span>`).join('');
+    preview.style.display = 'block';
+    document.getElementById('btn-gerar-label').textContent = `Gerar ${horarios.length} Horários`;
+}
+
+function gerarLote() {
     const data  = document.getElementById('q-data').value;
-    const hora  = document.getElementById('q-hora').value || '08:30';
     const mes   = document.getElementById('q-mes').value;
     const ano   = parseInt(document.getElementById('q-ano').value) || currentAno;
     const mag   = document.getElementById('q-magistrado').value;
-    if (!data) { showToast('Informe a data do horário','error'); return; }
-    const slot = {
-        id: nextId++, ano, mes, data, hora,
-        processo: '', reu: '', magistrado: mag, promotor: '',
-        status: '', pendencias: '', observacoes: '',
-        reuPreso: false, projudi: false, intimacoes: false, termo: false,
-    };
-    audiencias.push(slot);
+    const pro   = document.getElementById('q-promotor').value;
+    if (!data) { showToast('Informe a data', 'error'); return; }
+    const horarios = calcLoteHorarios();
+    horarios.forEach(hora => {
+        audiencias.push({
+            id: nextId++, ano, mes, data, hora,
+            processo: '', reu: '', magistrado: mag, promotor: pro,
+            status: '', pendencias: '', observacoes: '',
+            reuPreso: false, projudi: false, intimacoes: false, termo: false,
+        });
+    });
     saveData();
     currentAno = ano; currentMes = 'Todos';
     render();
-    showToast(`Horário ${hora} em ${fmtData(data)} adicionado — clique para preencher`, 'success');
+    showToast(`${horarios.length} horários criados em ${fmtData(data)}!`, 'success');
+    document.getElementById('lote-preview').style.display = 'none';
 }
 
 // ─── TOGGLE INLINE (PROJ / INTM / TERMO) ─────────────────────────────────────
@@ -891,12 +1009,86 @@ function toggleField(id, field) {
     render();
 }
 
+// ─── PREENCHER SLOT ──────────────────────────────────────────────────────────
+
+function openPreencher(id) {
+    const a = audiencias.find(x => x.id === id);
+    if (!a) return;
+    document.getElementById('p-id').value = id;
+    document.getElementById('p-processo').value = a.processo || '';
+    document.getElementById('preencher-info').innerHTML = `
+        <div class="preencher-info-item">
+            <div class="preencher-info-label">Data</div>
+            <div class="preencher-info-value">${fmtData(a.data)}</div>
+        </div>
+        <div class="preencher-info-item">
+            <div class="preencher-info-label">Hora</div>
+            <div class="preencher-info-value">${a.hora || '--:--'}</div>
+        </div>
+        <div class="preencher-info-item">
+            <div class="preencher-info-label">Magistrado</div>
+            <div class="preencher-info-value">${a.magistrado || '—'}</div>
+        </div>
+        <div class="preencher-info-item">
+            <div class="preencher-info-label">Promotoria</div>
+            <div class="preencher-info-value">${a.promotor || '—'}</div>
+        </div>`;
+    // Réus: split por " / " se múltiplos
+    const reus = a.reu ? a.reu.split(' / ').filter(Boolean) : [''];
+    const lista = document.getElementById('reus-list');
+    lista.innerHTML = '';
+    reus.forEach(r => adicionarLinhaReu(r));
+    document.getElementById('btn-editar-completo').onclick = () => { closePreencher(); openModal(id); };
+    document.getElementById('preencher-modal').classList.add('open');
+    document.getElementById('p-processo').focus();
+}
+
+function closePreencher() { document.getElementById('preencher-modal').classList.remove('open'); }
+
+function adicionarLinhaReu(valor = '') {
+    const lista = document.getElementById('reus-list');
+    const row = document.createElement('div');
+    row.className = 'reu-row';
+    row.innerHTML = `<input type="text" placeholder="Nome completo do réu" value="${valor.replace(/"/g,'&quot;')}">
+        <button class="btn-rem-reu" onclick="removerLinhaReu(this)" title="Remover"><i class="fas fa-times"></i></button>`;
+    lista.appendChild(row);
+    row.querySelector('input').focus();
+}
+
+function addReuRow() { adicionarLinhaReu(''); }
+
+function removerLinhaReu(btn) {
+    const lista = document.getElementById('reus-list');
+    if (lista.children.length <= 1) { lista.querySelector('input').value = ''; return; }
+    btn.closest('.reu-row').remove();
+}
+
+function salvarPreencher() {
+    const id  = parseInt(document.getElementById('p-id').value);
+    const processo = document.getElementById('p-processo').value.trim();
+    if (!processo) { showToast('Informe o número do processo', 'error'); return; }
+    const reus = [...document.getElementById('reus-list').querySelectorAll('input')]
+        .map(i => i.value.trim()).filter(Boolean);
+    const a = audiencias.find(x => x.id === id);
+    if (!a) return;
+    a.processo = processo;
+    a.reu = reus.join(' / ');
+    saveData();
+    closePreencher();
+    render();
+    showToast('Audiência preenchida!', 'success');
+}
+
+document.getElementById('preencher-modal').addEventListener('click', e => { if (e.target===e.currentTarget) closePreencher(); });
+
 // ─── CRUD MODAL ──────────────────────────────────────────────────────────────
 
 function openModal(id) {
     const a = audiencias.find(x => x.id === id);
     if (!a) return;
-    document.getElementById('modal-title').textContent = isSlot(a) ? 'Preencher Audiência' : 'Editar Audiência';
+    // Slots sem processo abrem o modal simplificado de preenchimento
+    if (isSlot(a)) { openPreencher(id); return; }
+    document.getElementById('modal-title').textContent = 'Editar Audiência';
     document.getElementById('edit-id').value = id;
 
     const years = getAvailableYears();

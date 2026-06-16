@@ -363,7 +363,7 @@
     <!-- PAINEL CRIAÇÃO EM LOTE -->
     <div class="lote-panel">
         <div class="lote-header" onclick="toggleLote()">
-            <h3><i class="fas fa-calendar-plus"></i> Criar Horários de Audiências</h3>
+            <h3><i class="fas fa-calendar-plus"></i> Criar Horários em Lote</h3>
             <span class="lote-toggle" id="lote-toggle-icon"><i class="fas fa-chevron-down"></i></span>
         </div>
         <div class="lote-body" id="lote-body">
@@ -456,7 +456,7 @@
     <div class="table-wrapper">
         <div class="table-info">
             <span id="table-count">Carregando...</span>
-            <span style="font-size:0.75rem;color:#aaa">Clique em uma linha para editar</span>
+            <span style="font-size:0.75rem;color:#aaa">Clique em uma linha para editar · PROJ/INTM/TERMO alteráveis direto na tabela</span>
         </div>
         <div style="overflow-x:auto">
         <table>
@@ -469,9 +469,9 @@
                     <th onclick="sortBy('magistrado')">Magistrado <span id="sort-magistrado"></span></th>
                     <th class="no-sort">Promotor</th>
                     <th onclick="sortBy('status')">Status <span id="sort-status"></span></th>
-                    <th class="no-sort toggle-col" title="PROJUDI">PROJUDI</th>
-                    <th class="no-sort toggle-col" title="Intimações">Intimações</th>
-                    <th class="no-sort toggle-col" title="Termo">Termos</th>
+                    <th class="no-sort toggle-col">PROJUDI</th>
+                    <th class="no-sort toggle-col">Intimações</th>
+                    <th class="no-sort toggle-col">Termos</th>
                     <th class="no-sort">Anotações</th>
                 </tr>
             </thead>
@@ -1557,16 +1557,16 @@ function gerarPDF() {
 
     // Modal de seleção de colunas
     const colOpts = [
-        {id:'col-data',      label:'Data',        def:true},
+        {id:'col-data',      label:'# Data',      def:true},
         {id:'col-hora',      label:'Hora',        def:true},
-        {id:'col-reu',       label:'Réu(s)',       def:true},
+        {id:'col-reu',       label:'Réu',         def:true},
         {id:'col-processo',  label:'Processo',    def:true},
         {id:'col-magistrado',label:'Magistrado',  def:true},
         {id:'col-promotor',  label:'Promotor',    def:true},
         {id:'col-status',    label:'Status',      def:true},
-        {id:'col-proj',      label:'PROJ',        def:true},
-        {id:'col-intm',      label:'INTM',        def:true},
-        {id:'col-termo',     label:'TERMO',       def:true},
+        {id:'col-proj',      label:'PROJUDI',     def:true},
+        {id:'col-intm',      label:'Intimações',  def:true},
+        {id:'col-termo',     label:'Termos',      def:true},
         {id:'col-pendencias',label:'Anotações',   def:true},
     ];
     const overlay = document.createElement('div');

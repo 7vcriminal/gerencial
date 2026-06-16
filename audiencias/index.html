@@ -1614,7 +1614,7 @@ function _imprimirPDF(filtered, cols) {
         <tr class="${a.reuPreso ? 'preso' : ''}">
             ${td('col-data', fmtData(a.data))}
             ${td('col-hora', a.hora || '--:--')}
-            ${td('col-reu', (a.reu ? a.reu.split(' / ').join('<br>') : '—') + (a.reuPreso ? ' 🔒' : ''))}
+            ${td('col-reu', a.reu ? a.reu.split(' / ').map((n,i) => n + (a.reusPreso ? (a.reusPreso[i] ? ' 🔒' : '') : (a.reuPreso && i===0 ? ' 🔒' : ''))).join('<br>') : '—')}
             ${td('col-processo', `<strong>${a.processo || '—'}</strong>`)}
             ${td('col-magistrado', a.magistrado || '—')}
             ${td('col-promotor', a.promotor || '—')}

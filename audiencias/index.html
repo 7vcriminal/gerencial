@@ -145,7 +145,7 @@
         tbody tr.preso-row:hover { background: #fdecea; }
         tbody tr.slot-row { background: #f0fdf4; }
         tbody tr.slot-row:hover { background: #dcfce7; }
-        td { padding: 0.65rem 0.8rem; font-size: 0.84rem; color: var(--text); vertical-align: middle; }
+        td { padding: 0.5rem 0.65rem; font-size: 0.78rem; color: var(--text); vertical-align: middle; }
         td.processo { font-family: monospace; font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
         td.reu { font-weight: 600; max-width: 200px; }
         td.hora, td.data { white-space: nowrap; }
@@ -465,7 +465,6 @@
                     <th class="no-sort toggle-col" title="Intimações">INTM</th>
                     <th class="no-sort toggle-col" title="Termo">TERMO</th>
                     <th class="no-sort">Anotações</th>
-                    <th class="no-sort">Ações</th>
                 </tr>
             </thead>
             <tbody id="table-body"></tbody>
@@ -624,9 +623,12 @@
                 </div>
             </div>
         </div>
-        <div class="modal-footer">
-            <button class="btn-cancel-modal" onclick="closeModal()">Cancelar</button>
-            <button class="btn-save" onclick="saveAudiencia()"><i class="fas fa-save"></i> Salvar</button>
+        <div class="modal-footer" style="justify-content:space-between">
+            <button class="btn-del" style="padding:0.6rem 1.1rem;font-size:0.88rem" onclick="deleteFromModal()"><i class="fas fa-trash"></i> Excluir</button>
+            <div style="display:flex;gap:0.75rem">
+                <button class="btn-cancel-modal" onclick="closeModal()">Cancelar</button>
+                <button class="btn-save" onclick="saveAudiencia()"><i class="fas fa-save"></i> Salvar</button>
+            </div>
         </div>
     </div>
 </div>
@@ -920,9 +922,6 @@ function renderTable(filtered) {
                     onclick="toggleField(${a.id},'termo')"></button>
             </td>
             <td class="pendencias-col">${a.pendencias||''}</td>
-            <td class="actions-cell" onclick="event.stopPropagation()">
-                <button class="btn-del" onclick="deleteAudiencia(${a.id})" title="Excluir"><i class="fas fa-trash"></i></button>
-            </td>
         </tr>`;
     }).join('');
 }
@@ -1303,6 +1302,13 @@ function deleteAudiencia(id) {
     saveData();
     if (currentView==='agenda') render(); else renderRelatorios();
     showToast('Audiência excluída','error');
+}
+
+function deleteFromModal() {
+    const id = parseInt(document.getElementById('edit-id').value);
+    if (!id || !confirm('Excluir esta audiência?')) return;
+    closeModal();
+    deleteAudiencia(id);
 }
 
 document.getElementById('form-modal').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal(); });

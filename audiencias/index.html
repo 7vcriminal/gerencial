@@ -1555,6 +1555,47 @@ function gerarPDF() {
     const filtered = getFiltered();
     if (!filtered.length) { showToast('Nenhuma audiência para exportar', 'error'); return; }
 
+    // Modal de seleção de colunas
+    const colOpts = [
+        {id:'col-data',      label:'Data',        def:true},
+        {id:'col-hora',      label:'Hora',        def:true},
+        {id:'col-reu',       label:'Réu(s)',       def:true},
+        {id:'col-processo',  label:'Processo',    def:true},
+        {id:'col-magistrado',label:'Magistrado',  def:true},
+        {id:'col-promotor',  label:'Promotor',    def:true},
+        {id:'col-status',    label:'Status',      def:true},
+        {id:'col-proj',      label:'PROJ',        def:true},
+        {id:'col-intm',      label:'INTM',        def:true},
+        {id:'col-termo',     label:'TERMO',       def:true},
+        {id:'col-pendencias',label:'Anotações',   def:true},
+    ];
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = `<div style="background:#fff;border-radius:12px;padding:1.5rem;max-width:420px;width:90%;font-family:inherit">
+        <h3 style="margin-bottom:1rem;font-size:1rem;color:#1a2a6c"><i class="fas fa-file-pdf" style="color:#e74c3c"></i> Exportar PDF</h3>
+        <p style="font-size:0.8rem;color:#64748b;margin-bottom:1rem">${filtered.length} audiências com os filtros atuais. Selecione as colunas:</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-bottom:1.25rem">
+            ${colOpts.map(c=>`<label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer">
+                <input type="checkbox" id="${c.id}" ${c.def?'checked':''} style="accent-color:#1a2a6c">
+                ${c.label}</label>`).join('')}
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:0.75rem">
+            <button id="pdf-cancel" style="padding:0.5rem 1rem;border:1px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;font-family:inherit">Cancelar</button>
+            <button id="pdf-confirm" style="padding:0.5rem 1.2rem;border:none;border-radius:8px;background:#1a2a6c;color:#fff;font-weight:700;cursor:pointer;font-family:inherit"><i class="fas fa-print"></i> Imprimir</button>
+        </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('pdf-cancel').onclick = () => overlay.remove();
+    document.getElementById('pdf-confirm').onclick = () => {
+        const cols = colOpts.map(c => ({...c, on: document.getElementById(c.id).checked}));
+        overlay.remove();
+        _imprimirPDF(filtered, cols);
+    };
+}
+
+function _imprimirPDF(filtered, cols) {
+    const show = id => cols.find(c=>c.id===id)?.on;
+
     const descFiltros = [];
     if (currentAno !== 'Historico') descFiltros.push(`Ano: ${currentAno}`);
     if (currentMes !== 'Todos')     descFiltros.push(`Mês: ${currentMes}`);
@@ -1566,19 +1607,22 @@ function gerarPDF() {
     if (searchTerm)    descFiltros.push(`Busca: "${searchTerm}"`);
     if (activeCard !== 'total') descFiltros.push(`Card: ${activeCard}`);
 
+    const th = id => show(id) ? `<th>${cols.find(c=>c.id===id).label}</th>` : '';
+    const td = (id, val) => show(id) ? `<td>${val}</td>` : '';
+
     const linhas = filtered.map(a => `
         <tr class="${a.reuPreso ? 'preso' : ''}">
-            <td>${fmtData(a.data)}</td>
-            <td>${a.hora || '--:--'}</td>
-            <td>${(a.reu || '—') + (a.reuPreso ? ' 🔒' : '')}</td>
-            <td class="mono" style="font-weight:700">${a.processo || '—'}</td>
-            <td>${a.magistrado || '—'}</td>
-            <td>${a.promotor || '—'}</td>
-            <td>${a.status || 'Pendente'}</td>
-            <td>${a.projudi ? '✓' : '○'}</td>
-            <td>${a.intimacoes ? '✓' : '○'}</td>
-            <td>${a.termo ? '✓' : '○'}</td>
-            <td>${a.pendencias || ''}</td>
+            ${td('col-data', fmtData(a.data))}
+            ${td('col-hora', a.hora || '--:--')}
+            ${td('col-reu', (a.reu || '—') + (a.reuPreso ? ' 🔒' : ''))}
+            ${td('col-processo', `<strong>${a.processo || '—'}</strong>`)}
+            ${td('col-magistrado', a.magistrado || '—')}
+            ${td('col-promotor', a.promotor || '—')}
+            ${td('col-status', a.status || 'Pendente')}
+            ${td('col-proj', a.projudi ? '✓' : '○')}
+            ${td('col-intm', a.intimacoes ? '✓' : '○')}
+            ${td('col-termo', a.termo ? '✓' : '○')}
+            ${td('col-pendencias', a.pendencias || '')}
         </tr>`).join('');
 
     const html = `<!DOCTYPE html><html lang="pt-br"><head>
@@ -1586,25 +1630,24 @@ function gerarPDF() {
 <title>Audiências - Relatório</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Arial', sans-serif; font-size: 11px; color: #1a1a1a; padding: 20px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #1a1a1a; padding: 20px; }
     .cabecalho { border-bottom: 3px solid #1a2a6c; padding-bottom: 10px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; }
-    .cab-titulo h1 { font-size: 15px; color: #1a2a6c; font-weight: 700; }
-    .cab-titulo p { font-size: 10px; color: #666; margin-top: 2px; }
-    .cab-meta { text-align: right; font-size: 9px; color: #888; }
-    .filtros { background: #f0f4f8; border-radius: 4px; padding: 6px 10px; margin-bottom: 10px; font-size: 9.5px; color: #444; }
+    .cab-titulo h1 { font-size: 16px; color: #1a2a6c; font-weight: 700; }
+    .cab-titulo p { font-size: 11px; color: #666; margin-top: 2px; }
+    .cab-meta { text-align: right; font-size: 10px; color: #888; }
+    .filtros { background: #f0f4f8; border-radius: 4px; padding: 6px 10px; margin-bottom: 10px; font-size: 10px; color: #444; }
     .filtros strong { color: #1a2a6c; }
     .resumo { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-    .resumo-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 10px; font-size: 9.5px; }
-    .resumo-item strong { display: block; font-size: 14px; color: #1a2a6c; }
-    table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
-    thead th { background: #1a2a6c; color: white; padding: 5px 6px; text-align: left; font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
-    tbody tr { border-bottom: 1px solid #e8ecf0; }
+    .resumo-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 10px; font-size: 10px; }
+    .resumo-item strong { display: block; font-size: 15px; color: #1a2a6c; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    thead th { background: #1a2a6c; color: white; padding: 6px 7px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; font-family: inherit; }
+    tbody tr { border-bottom: 1px solid #e2e8f0; }
     tbody tr:nth-child(even) { background: #f8fafc; }
     tbody tr.preso { background: #fff5f5; }
     tbody tr.preso:nth-child(even) { background: #ffe8e8; }
-    td { padding: 4px 6px; vertical-align: top; }
-    td.mono { font-family: monospace; font-size: 8.5px; }
-    .rodape { margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 8px; font-size: 8.5px; color: #999; display: flex; justify-content: space-between; }
+    td { padding: 5px 7px; vertical-align: top; font-family: inherit; }
+    .rodape { margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 8px; font-size: 9px; color: #999; display: flex; justify-content: space-between; }
     @media print {
         body { padding: 10px; }
         @page { margin: 15mm; size: A4 landscape; }
@@ -1631,11 +1674,7 @@ ${descFiltros.length ? `<div class="filtros"><strong>Filtros aplicados:</strong>
         .map(([l,v,c]) => `<div class="resumo-item"><strong style="color:${c}">${v}</strong>${l}</div>`).join(''); })()}
 </div>
 <table>
-    <thead><tr>
-        <th>Data</th><th>Hora</th><th>Réu(s)</th>
-        <th>Processo</th><th>Magistrado</th><th>Promotor</th><th>Status</th>
-        <th>PROJ</th><th>INTM</th><th>TERMO</th><th>Pendências</th>
-    </tr></thead>
+    <thead><tr>${th('col-data')}${th('col-hora')}${th('col-reu')}${th('col-processo')}${th('col-magistrado')}${th('col-promotor')}${th('col-status')}${th('col-proj')}${th('col-intm')}${th('col-termo')}${th('col-pendencias')}</tr></thead>
     <tbody>${linhas}</tbody>
 </table>
 <div class="rodape">

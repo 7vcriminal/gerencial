@@ -162,13 +162,26 @@
         .s-outro      { background: #e8eaf6; color: #5c6bc0; }
 
         /* TOGGLE BUTTONS (PROJ / INTM / TERMO) */
+        td.toggle-col { text-align: center; }
+        thead th.toggle-col { text-align: center; }
         .toggle-pill { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 22px; border-radius: 50px; border: none; cursor: pointer; font-size: 0.7rem; font-weight: 700; transition: var(--transition); }
         .toggle-pill.on  { background: #e8f5e9; color: var(--green); }
         .toggle-pill.off { background: #f0f4f8; color: #cbd5e0; }
-        .toggle-pill:hover.on  { background: #c3e6cb; }
-        .toggle-pill:hover.off { background: #e2e8f0; color: var(--muted); }
+        .toggle-pill:hover { filter: brightness(0.92); }
         .toggle-pill.on::after  { content: '✓'; }
         .toggle-pill.off::after { content: '○'; }
+        .toggle-pill.alerta { box-shadow: 0 0 0 2px var(--yellow); }
+
+        /* ALERTAS */
+        .alerta-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; font-size: 0.6rem; font-weight: 700; margin-left: 4px; vertical-align: middle; cursor: default; flex-shrink: 0; }
+        .alerta-status  { background: #fdecea; color: var(--red);  }
+        .alerta-projudi { background: #fff3cd; color: var(--yellow); }
+        .alerta-intm    { background: #fff9e6; color: #e67e22; }
+        .alerta-termo   { background: #e8eaf6; color: #5c6bc0; }
+        .alerta-badge { display: inline-flex; align-items: center; gap: 3px; background: #fdecea; color: var(--red); border-radius: 50px; padding: 0.15rem 0.5rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+
+        /* PENDÊNCIAS NA TABELA */
+        td.pendencias-col { font-size: 0.78rem; color: var(--muted); max-width: 180px; white-space: pre-wrap; word-break: break-word; line-height: 1.4; }
 
         .actions-cell { white-space: nowrap; }
         .btn-edit, .btn-del { border: none; border-radius: 6px; cursor: pointer; padding: 0.3rem 0.6rem; font-size: 0.8rem; transition: var(--transition); }
@@ -442,9 +455,10 @@
                     <th onclick="sortBy('magistrado')">Magistrado <span id="sort-magistrado"></span></th>
                     <th class="no-sort">Promotor</th>
                     <th onclick="sortBy('status')">Status <span id="sort-status"></span></th>
-                    <th class="no-sort" title="PROJUDI">PROJ</th>
-                    <th class="no-sort" title="Intimações">INTM</th>
-                    <th class="no-sort" title="Termo">TERMO</th>
+                    <th class="no-sort toggle-col" title="PROJUDI">PROJ</th>
+                    <th class="no-sort toggle-col" title="Intimações">INTM</th>
+                    <th class="no-sort toggle-col" title="Termo">TERMO</th>
+                    <th class="no-sort">Pendências</th>
                     <th class="no-sort">Ações</th>
                 </tr>
             </thead>
@@ -714,6 +728,7 @@ function getDataScoped() {
 }
 function getFiltered() {
     return getDataScoped().filter(a => {
+        if (!a.data) return false; // sem data: ocultar de filtros e impressão
         if (currentMes !== 'Todos' && a.mes !== currentMes) return false;
         if (filterPreso && !a.reuPreso) return false;
         // card filter
@@ -855,14 +870,22 @@ function renderTable(filtered) {
         `${filtered.length} audiência${filtered.length!==1?'s':''} exibida${filtered.length!==1?'s':''}`;
     if (!filtered.length) {
         document.getElementById('table-body').innerHTML =
-            `<tr><td colspan="12"><div class="empty-state"><i class="fas fa-calendar-xmark"></i><p>Nenhuma audiência encontrada com os filtros selecionados.</p></div></td></tr>`;
+            `<tr><td colspan="13"><div class="empty-state"><i class="fas fa-calendar-xmark"></i><p>Nenhuma audiência encontrada com os filtros selecionados.</p></div></td></tr>`;
         return;
     }
     const showAno = currentAno === 'Historico';
     document.getElementById('table-body').innerHTML = filtered.map(a => {
         const slot = isSlot(a);
+        const al   = getAlertas(a);
+        const alertaProj = al.includes('projudi');
+        const alertaIntm = al.includes('intimacoes');
+        const alertaTerm = al.includes('termo');
+        const alertaStat = al.includes('status');
+        const statusCell = slot ? '—' : `
+            <span class="status-badge ${statusClass(a.status)}">${a.status||'Pendente'}</span>
+            ${alertaStat ? '<span class="alerta-icon alerta-status" title="Pendente há mais de 5 dias!">!</span>' : ''}`;
         return `
-        <tr class="${a.reuPreso?'preso-row':''} ${slot?'slot-row':''}" onclick="openModal(${a.id})" style="cursor:pointer">
+        <tr class="${a.reuPreso?'preso-row':''} ${slot?'slot-row':''} ${al.length?'has-alert':''}" onclick="openModal(${a.id})" style="cursor:pointer">
             <td class="data">${fmtData(a.data)}${showAno?`<br><small style="color:var(--muted)">${a.ano||2026}</small>`:''}</td>
             <td class="hora">${a.hora||'--:--'}</td>
             <td class="reu">${slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu||'—')}</td>
@@ -872,16 +895,23 @@ function renderTable(filtered) {
             <td class="processo">${a.processo||'<span style="color:#cbd5e0;font-style:italic">— aguardando —</span>'}</td>
             <td>${a.magistrado||'—'}</td>
             <td style="font-size:0.8rem;color:var(--muted)">${a.promotor||'—'}</td>
-            <td>${slot ? '—' : `<span class="status-badge ${statusClass(a.status)}">${a.status||'Pendente'}</span>`}</td>
-            <td onclick="event.stopPropagation()">
-                <button class="toggle-pill ${a.projudi?'on':'off'}" title="PROJUDI" onclick="toggleField(${a.id},'projudi')"></button>
+            <td>${statusCell}</td>
+            <td class="toggle-col" onclick="event.stopPropagation()">
+                <button class="toggle-pill ${a.projudi?'on':'off'} ${alertaProj?'alerta':''}"
+                    title="${alertaProj?'⚠ PROJUDI não registrado há mais de 5 dias!':'PROJUDI'}"
+                    onclick="toggleField(${a.id},'projudi')"></button>
             </td>
-            <td onclick="event.stopPropagation()">
-                <button class="toggle-pill ${a.intimacoes?'on':'off'}" title="Intimações" onclick="toggleField(${a.id},'intimacoes')"></button>
+            <td class="toggle-col" onclick="event.stopPropagation()">
+                <button class="toggle-pill ${a.intimacoes?'on':'off'} ${alertaIntm?'alerta':''}"
+                    title="${alertaIntm?'⚠ Intimações não realizadas — audiência em menos de 15 dias!':'Intimações'}"
+                    onclick="toggleField(${a.id},'intimacoes')"></button>
             </td>
-            <td onclick="event.stopPropagation()">
-                <button class="toggle-pill ${a.termo?'on':'off'}" title="Termo" onclick="toggleField(${a.id},'termo')"></button>
+            <td class="toggle-col" onclick="event.stopPropagation()">
+                <button class="toggle-pill ${a.termo?'on':'off'} ${alertaTerm?'alerta':''}"
+                    title="${alertaTerm?'⚠ Termo não lavrado — já se passaram 48h da audiência!':'Termo'}"
+                    onclick="toggleField(${a.id},'termo')"></button>
             </td>
+            <td class="pendencias-col">${a.pendencias||''}</td>
             <td class="actions-cell" onclick="event.stopPropagation()">
                 <button class="btn-del" onclick="deleteAudiencia(${a.id})" title="Excluir"><i class="fas fa-trash"></i></button>
             </td>
@@ -889,14 +919,73 @@ function renderTable(filtered) {
     }).join('');
 }
 
+// Dados para os cards de stats: respeita mês/ano/data mas ignora card/status/preso/busca
+function getStatsData() {
+    return getDataScoped().filter(a => {
+        if (!a.data) return false;
+        if (currentMes !== 'Todos' && a.mes !== currentMes) return false;
+        if (filterDataDe  && a.data < filterDataDe)  return false;
+        if (filterDataAte && a.data > filterDataAte) return false;
+        if (filterMagistrado && a.magistrado !== filterMagistrado) return false;
+        return true;
+    });
+}
+
+// ─── ALERTAS ──────────────────────────────────────────────────────────────────
+
+function diasDiff(iso) {
+    if (!iso) return null;
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const d = new Date(iso + 'T12:00:00');
+    return Math.round((hoje - d) / 86400000); // positivo = passado, negativo = futuro
+}
+
+function getAlertas(a) {
+    if (!a.data) return [];
+    const alertas = [];
+    const diff = diasDiff(a.data); // dias desde a audiência (positivo = já passou)
+
+    // Status pendente há 5+ dias (audiência já passou)
+    if (!a.status && diff >= 5) alertas.push('status');
+
+    // PROJUDI não marcado 5+ dias após a data da audiência
+    const diffCriacao = diasDiff(a.criadoEm || a.data);
+    if (!a.projudi && diffCriacao >= 5) alertas.push('projudi');
+
+    // Intimações: não marcadas e faltam ≤15 dias para a audiência (ou já passou e não foi feita)
+    if (!a.intimacoes && diff >= -15 && diff <= 1) alertas.push('intimacoes');
+
+    // Termo: não marcado e já se passaram 2+ dias da audiência
+    if (!a.termo && diff >= 2) alertas.push('termo');
+
+    return alertas;
+}
+
+function renderAlertaBanner() {
+    const totalAlertas = getDataScoped().filter(a => a.data && getAlertas(a).length > 0).length;
+    let banner = document.getElementById('alerta-banner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'alerta-banner';
+        banner.style.cssText = 'display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius);padding:0.75rem 1.25rem;margin-bottom:1rem;font-size:0.85rem;font-weight:600;color:#b91c1c;display:flex;align-items:center;gap:0.6rem;';
+        document.getElementById('view-agenda').insertBefore(banner, document.querySelector('.mes-tabs'));
+    }
+    if (totalAlertas > 0) {
+        banner.style.display = 'flex';
+        banner.innerHTML = `<i class="fas fa-triangle-exclamation"></i> ${totalAlertas} audiência${totalAlertas>1?'s requerem':'requer'} atenção — verifique os indicadores <span style="background:#fecaca;border-radius:50px;padding:0.1rem 0.5rem">${totalAlertas}</span> na tabela.`;
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
 function render() {
     buildYearTabs();
     buildMesTabs();
     buildSelectores();
-    const scopedData = getDataScoped();
-    updateStatsCards('s', scopedData);
+    updateStatsCards('s', getStatsData());
     renderTable(getFiltered());
     updateSortIcons();
+    renderAlertaBanner();
 }
 
 function updateSortIcons() {
@@ -1014,6 +1103,7 @@ function gerarLote() {
             processo: '', reu: '', magistrado: mag, promotor: pro,
             status: '', pendencias: '', observacoes: '',
             reuPreso: false, projudi: false, intimacoes: false, termo: false,
+            criadoEm: new Date().toISOString().slice(0,10),
         });
     });
     saveData();
@@ -1142,8 +1232,10 @@ function closeModal() { document.getElementById('form-modal').classList.remove('
 
 function saveAudiencia() {
     const id  = parseInt(document.getElementById('edit-id').value);
+    const existing = audiencias.find(a => a.id === id);
     const obj = {
         id,
+        criadoEm: existing?.criadoEm || new Date().toISOString().slice(0,10),
         ano: parseInt(document.getElementById('f-ano').value) || 2026,
         mes: document.getElementById('f-mes').value,
         data: document.getElementById('f-data').value,

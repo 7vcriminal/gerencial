@@ -64,6 +64,7 @@
         .stat-card.active-filter.pendente { box-shadow: 0 0 0 3px var(--blue); }
         .stat-card.active-filter.cancelada { box-shadow: 0 0 0 3px var(--red); }
         .stat-card.active-filter.preso { box-shadow: 0 0 0 3px var(--secondary); }
+        .stat-card.active-filter.slot  { box-shadow: 0 0 0 3px #6366f1; }
         .stat-label { font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-value { font-size: 1.9rem; font-weight: 700; line-height: 1; }
         .stat-card.total .stat-value     { color: var(--primary); }
@@ -143,6 +144,10 @@
         tbody tr:hover { background: #f8fafc; }
         tbody tr.preso-row { background: #fff8f8; }
         tbody tr.preso-row:hover { background: #fdecea; }
+        tbody tr.preso-row td.reu,
+        tbody tr.preso-row td.processo,
+        tbody tr.preso-row td.data,
+        tbody tr.preso-row td.hora { color: var(--red); font-weight: 700; }
         tbody tr.slot-row { background: #f0fdf4; }
         tbody tr.slot-row:hover { background: #dcfce7; }
         td { padding: 0.4rem 0.55rem; font-size: 0.74rem; color: var(--text); vertical-align: middle; }
@@ -349,6 +354,11 @@
             <div class="stat-value" id="s-preso">0</div>
             <div class="stat-hint">clique para filtrar</div>
         </div>
+        <div class="stat-card" style="border-color:#6366f1;cursor:pointer" onclick="filterByCard('slot')" title="Filtrar horários não preenchidos">
+            <div class="stat-label">Não Preenchidas</div>
+            <div class="stat-value" id="s-slot" style="color:#6366f1">0</div>
+            <div class="stat-hint">clique para filtrar</div>
+        </div>
     </div>
 
     <!-- PAINEL CRIAÇÃO EM LOTE -->
@@ -523,7 +533,7 @@
             <div class="preencher-info" id="preencher-info"></div>
             <div class="form-group" style="margin-bottom:1rem">
                 <label style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px">Nº do Processo</label>
-                <input type="text" id="p-processo" placeholder="0000000-00.0000.8.04.1000"
+                <input type="text" id="p-processo" placeholder="0000000-00.0000.8.04.0001" oninput="maskProcesso(this)"
                     style="padding:0.6rem 0.75rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.9rem;width:100%">
             </div>
             <div class="form-group">
@@ -532,6 +542,12 @@
                 </label>
                 <div class="reus-list" id="reus-list"></div>
                 <button class="btn-add-reu" onclick="addReuRow()"><i class="fas fa-plus"></i> Adicionar réu</button>
+            </div>
+            <div class="form-group" style="margin-top:0.75rem">
+                <label class="form-check" style="cursor:pointer">
+                    <input type="checkbox" id="p-preso" style="width:16px;height:16px;accent-color:var(--red)">
+                    <i class="fas fa-handcuffs" style="color:var(--red)"></i> Réu Preso
+                </label>
             </div>
         </div>
         <div class="modal-footer">
@@ -575,11 +591,14 @@
                 </div>
                 <div class="form-group full">
                     <label>Nº do Processo</label>
-                    <input type="text" id="f-processo" placeholder="0000000-00.0000.8.04.1000">
+                    <input type="text" id="f-processo" placeholder="0000000-00.0000.8.04.0001" oninput="maskProcesso(this)">
                 </div>
                 <div class="form-group full">
-                    <label>Réu(s)</label>
-                    <input type="text" id="f-reu" placeholder="Nome completo do réu">
+                    <label style="display:flex;justify-content:space-between;align-items:center">
+                        <span>Réu(s)</span>
+                        <button type="button" class="btn-add-reu" onclick="addReuRowEdit()" style="font-size:0.75rem;padding:0.2rem 0.6rem"><i class="fas fa-plus"></i> Adicionar réu</button>
+                    </label>
+                    <div class="reus-list" id="f-reus-list"></div>
                 </div>
                 <div class="form-group">
                     <label>Magistrado</label>
@@ -753,6 +772,8 @@ function getFiltered() {
             if (!(a.status||'').toLowerCase().includes('cancel')) return false;
         } else if (activeCard === 'preso') {
             if (!a.reuPreso) return false;
+        } else if (activeCard === 'slot') {
+            if (a.processo) return false;
         }
         // dropdown filters
         if (filterStatus) {
@@ -798,6 +819,7 @@ function countStats(data) {
         pendente:  data.filter(a => !a.status).length,
         cancelada: data.filter(a => (a.status||'').toLowerCase().includes('cancel')).length,
         preso:     data.filter(a => a.reuPreso).length,
+        slot:      data.filter(a => !a.processo).length,
     };
 }
 function isSlot(a) { return !a.processo; }
@@ -862,10 +884,11 @@ function updateStatsCards(prefix, data) {
     document.getElementById(`${prefix}-pendente`).textContent = s.pendente;
     document.getElementById(`${prefix}-cancelada`).textContent = s.cancelada;
     document.getElementById(`${prefix}-preso`).textContent = s.preso;
+    if (document.getElementById(`${prefix}-slot`)) document.getElementById(`${prefix}-slot`).textContent = s.slot;
     // highlight active card
     if (prefix === 's') {
         document.querySelectorAll('#stats-grid .stat-card').forEach(c => c.classList.remove('active-filter'));
-        const map = {total:0,realizada:1,parcial:2,redesignada:3,pendente:4,cancelada:5,preso:6};
+        const map = {total:0,realizada:1,parcial:2,redesignada:3,pendente:4,cancelada:5,preso:6,slot:7};
         const idx = map[activeCard];
         if (idx !== undefined) {
             const cards = document.querySelectorAll('#stats-grid .stat-card');
@@ -1185,6 +1208,7 @@ function openPreencher(id) {
     const lista = document.getElementById('reus-list');
     lista.innerHTML = '';
     reus.forEach(r => adicionarLinhaReu(r));
+    document.getElementById('p-preso').checked = a.reuPreso || false;
     document.getElementById('btn-editar-completo').onclick = () => { closePreencher(); openModal(id); };
     document.getElementById('preencher-modal').classList.add('open');
     document.getElementById('p-processo').focus();
@@ -1220,6 +1244,7 @@ function salvarPreencher() {
     if (!a) return;
     a.processo = processo;
     a.reu = reus.join(' / ');
+    a.reuPreso = document.getElementById('p-preso').checked;
     saveData();
     closePreencher();
     render();
@@ -1227,6 +1252,27 @@ function salvarPreencher() {
 }
 
 document.getElementById('preencher-modal').addEventListener('click', e => { if (e.target===e.currentTarget) closePreencher(); });
+
+function maskProcesso(el) {
+    let v = el.value.replace(/\D/g,'');
+    if (v.length > 20) v = v.slice(0,20);
+    let r = v.slice(0,7);
+    if (v.length > 7)  r += '-' + v.slice(7,9);
+    if (v.length > 9)  r += '.' + v.slice(9,13);
+    if (v.length > 13) r += '.' + v.slice(13,14);
+    if (v.length > 14) r += '.' + v.slice(14,16);
+    if (v.length > 16) r += '.' + v.slice(16,20);
+    el.value = r;
+}
+
+function adicionarLinhaReuEdit(valor) {
+    const div = document.createElement('div');
+    div.className = 'reu-row';
+    div.innerHTML = `<input type="text" class="reu-input" value="${valor||''}" placeholder="Nome completo do réu">
+        <button type="button" onclick="this.parentElement.remove()" class="btn-del" style="padding:0.25rem 0.5rem;font-size:0.8rem"><i class="fas fa-times"></i></button>`;
+    document.getElementById('f-reus-list').appendChild(div);
+}
+function addReuRowEdit() { adicionarLinhaReuEdit(''); }
 
 // ─── CRUD MODAL ──────────────────────────────────────────────────────────────
 
@@ -1245,7 +1291,9 @@ function openModal(id) {
     document.getElementById('f-data').value      = a.data;
     document.getElementById('f-hora').value      = a.hora;
     document.getElementById('f-processo').value  = a.processo;
-    document.getElementById('f-reu').value        = a.reu;
+    const fReusList = document.getElementById('f-reus-list');
+    fReusList.innerHTML = '';
+    (a.reu ? a.reu.split(' / ') : ['']).forEach(r => adicionarLinhaReuEdit(r));
     document.getElementById('f-status').value    = a.status;
     document.getElementById('f-pendencias').value = a.pendencias;
     document.getElementById('f-observacoes').value = a.observacoes;
@@ -1274,7 +1322,7 @@ function saveAudiencia() {
         data: document.getElementById('f-data').value,
         hora: document.getElementById('f-hora').value,
         processo: document.getElementById('f-processo').value.trim(),
-        reu: document.getElementById('f-reu').value.trim(),
+        reu: Array.from(document.querySelectorAll('#f-reus-list .reu-input')).map(i=>i.value.trim()).filter(Boolean).join(' / '),
         magistrado: document.getElementById('f-magistrado').value,
         promotor: document.getElementById('f-promotor').value,
         status: document.getElementById('f-status').value,

@@ -267,10 +267,13 @@
         .toast.success { background: var(--green); }
         .toast.error { background: var(--red); }
 
+        button, .btn, .btn-edit, .btn-del, .btn-save, .btn-cancel-modal, .filter-btn, .view-btn, .mes-tab, .year-tab { -webkit-tap-highlight-color: transparent; }
+
         @media (max-width: 768px) {
             body { padding: 0.75rem; }
             .header { padding: 1rem; }
             .header h1 { font-size: 1.1rem; }
+            .btn-logout { position: static; padding: 0.4rem 0.7rem; }
             .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
             .stat-value { font-size: 1.4rem; }
             .stat-hint { display: none; }
@@ -285,8 +288,38 @@
             .nav-bar { flex-direction: column; align-items: flex-start; }
             .lote-fields { flex-direction: column; }
             .lf input, .lf select { min-width: unset; width: 100%; }
+            .lote-fields select, .lote-fields input { width: 100%; }
             .btn-gerar, .btn-preview { width: 100%; justify-content: center; }
             .preencher-info { gap: 0.75rem; }
+
+            /* TOOLBAR: filtros ocupam metade/total da largura */
+            .toolbar { gap: 0.6rem; }
+            .toolbar .search-box { flex: 1 1 100%; min-width: 0; }
+            .toolbar select, .toolbar .filter-btn { flex: 1 1 calc(50% - 0.3rem); min-width: 0; }
+            .toolbar button[onclick="gerarPDF()"] { flex: 1 1 100%; margin-left: 0 !important; justify-content: center; }
+
+            /* TABELA: rolagem horizontal */
+            .table-wrapper { overflow-x: auto; }
+            .table-wrapper table { min-width: 640px; }
+
+            /* MODAIS: quase tela cheia */
+            .modal { max-width: 96vw; }
+            .modal-body { padding: 1rem; }
+
+            /* TOQUE: alvo mínimo de toque */
+            .btn-edit, .btn-del { min-height: 36px; min-width: 36px; padding: 0.4rem 0.7rem; }
+
+            /* ABAS DE MÊS/ANO: rolagem horizontal sem quebra forçada */
+            .mes-tabs, .year-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 0.25rem; }
+            .mes-tab, .year-tab { flex-shrink: 0; }
+        }
+
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .stats-grid { grid-template-columns: repeat(4, 1fr); }
+            .toolbar select, .toolbar .filter-btn { flex: 1 1 calc(33% - 0.5rem); }
+            .table-wrapper { overflow-x: auto; }
+            .form-grid { grid-template-columns: 1fr 1fr; }
+            .modal { max-width: 90vw; }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

@@ -31,6 +31,11 @@
         .header p { font-size: 0.85rem; color: var(--muted); }
         .header-back { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--muted); font-size: 0.85rem; font-weight: 600; padding: 0.4rem 0.9rem; border-radius: 50px; border: 1px solid #e2e8f0; transition: var(--transition); }
         .header-back:hover { background: var(--primary); color: white; border-color: var(--primary); }
+        .header-actions { display: flex; align-items: center; gap: 0.6rem; margin-left: auto; }
+        .btn-profile { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.9rem 0.3rem 0.3rem; border-radius: 50px; border: 1px solid #e2e8f0; background: white; color: var(--text); font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .btn-profile:hover { border-color: var(--primary); }
+        .profile-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: 700; }
+        .profile-avatar-lg { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: 700; margin: 0 auto; }
 
         /* NAV BAR */
         .nav-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
@@ -360,8 +365,14 @@
             <p>7ª Vara Criminal da Comarca de Manaus · TJAM</p>
         </div>
     </div>
-    <a href="../" class="header-back"><i class="fas fa-arrow-left"></i> Central de Gestão</a>
-    <button class="btn-logout" onclick="authSignOut()" title="Sair"><i class="fas fa-right-from-bracket"></i> Sair</button>
+    <div class="header-actions">
+        <a href="../" class="header-back"><i class="fas fa-arrow-left"></i> Central de Gestão</a>
+        <button class="btn-logout" onclick="authSignOut()" title="Sair"><i class="fas fa-right-from-bracket"></i> Sair</button>
+        <button class="btn-profile" onclick="openProfile()" title="Perfil">
+            <span class="profile-avatar" id="header-avatar"><i class="fas fa-user"></i></span>
+            <span id="header-profile-name">Perfil</span>
+        </button>
+    </div>
 </header>
 
 <!-- ANO + NAVEGAÇÃO -->
@@ -369,6 +380,7 @@
     <div class="year-tabs" id="year-tabs"></div>
     <div class="nav-right">
         <button class="btn-config" onclick="openCadastro()"><i class="fas fa-users-gear"></i> Cadastros</button>
+        <button class="btn-config" onclick="fazerBackup()"><i class="fas fa-download"></i> Backup</button>
         <div class="view-toggle">
             <button id="btn-view-agenda" class="view-btn active" onclick="setView('agenda')"><i class="fas fa-table-list"></i> Agenda</button>
             <button id="btn-view-relatorios" class="view-btn" onclick="setView('relatorios')"><i class="fas fa-chart-bar"></i> Relatórios</button>
@@ -734,6 +746,30 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="profile-modal">
+    <div class="modal modal-sm">
+        <div class="modal-header">
+            <h2><i class="fas fa-user-circle"></i> Meu Perfil</h2>
+            <button class="btn-close" onclick="closeProfile()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:1.1rem;align-items:center;">
+            <span class="profile-avatar-lg" id="profile-avatar-lg"><i class="fas fa-user"></i></span>
+            <input type="file" id="profile-photo-input" accept="image/*" style="display:none" onchange="onProfilePhotoSelected(event)">
+            <button class="btn-config" onclick="document.getElementById('profile-photo-input').click()"><i class="fas fa-camera"></i> Alterar Foto</button>
+            <div style="width:100%;text-align:center;font-size:0.85rem;color:var(--muted);" id="profile-email"></div>
+            <hr style="width:100%;border:none;border-top:1px solid #e2e8f0;">
+            <div style="width:100%;display:flex;flex-direction:column;gap:0.5rem;">
+                <label style="font-size:0.72rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:0.4px;">Nova Senha</label>
+                <input type="password" id="profile-new-password" placeholder="••••••••" style="padding:0.6rem 0.75rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.9rem;">
+                <label style="font-size:0.72rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:0.4px;">Confirmar Senha</label>
+                <input type="password" id="profile-confirm-password" placeholder="••••••••" style="padding:0.6rem 0.75rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.9rem;">
+                <button class="btn-save" style="margin-top:0.4rem;" onclick="alterarSenha()"><i class="fas fa-key"></i> Alterar Senha</button>
+                <div id="profile-msg" style="display:none;font-size:0.82rem;font-weight:600;text-align:center;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 </div><!-- /#app-content -->
@@ -829,6 +865,7 @@ sb.auth.onAuthStateChange((event, session) => {
     if (session) {
         overlay.style.display = 'none';
         appContent.style.display = '';
+        atualizarAvatarHeader(session.user);
         if (!window.__appInitialized) {
             window.__appInitialized = true;
             initApp();
@@ -838,6 +875,102 @@ sb.auth.onAuthStateChange((event, session) => {
         appContent.style.display = 'none';
     }
 });
+
+// ─── PERFIL ────────────────────────────────────────────────────────────────
+
+function atualizarAvatarHeader(user) {
+    if (!user) return;
+    const avatarUrl = user.user_metadata && user.user_metadata.avatar_url;
+    const inicial = (user.email || '?').charAt(0).toUpperCase();
+    const headerAvatar = document.getElementById('header-avatar');
+    headerAvatar.innerHTML = avatarUrl ? `<img src="${avatarUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : inicial;
+    const nameEl = document.getElementById('header-profile-name');
+    if (nameEl) nameEl.textContent = (user.email || 'Perfil').split('@')[0];
+}
+
+async function openProfile() {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    document.getElementById('profile-email').textContent = user.email;
+    document.getElementById('profile-new-password').value = '';
+    document.getElementById('profile-confirm-password').value = '';
+    const msg = document.getElementById('profile-msg');
+    msg.style.display = 'none';
+    const avatarUrl = user.user_metadata && user.user_metadata.avatar_url;
+    const inicial = (user.email || '?').charAt(0).toUpperCase();
+    document.getElementById('profile-avatar-lg').innerHTML = avatarUrl ? `<img src="${avatarUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : inicial;
+    document.getElementById('profile-modal').classList.add('open');
+}
+
+function closeProfile() {
+    document.getElementById('profile-modal').classList.remove('open');
+}
+
+function onProfilePhotoSelected(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const img = new Image();
+        img.onload = async () => {
+            const canvas = document.createElement('canvas');
+            const size = 160;
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const ratio = Math.max(size / img.width, size / img.height);
+            const w = img.width * ratio, h = img.height * ratio;
+            ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            const { data, error } = await sb.auth.updateUser({ data: { avatar_url: dataUrl } });
+            if (error) { showToast('Erro ao salvar foto: ' + error.message); return; }
+            document.getElementById('profile-avatar-lg').innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            atualizarAvatarHeader(data.user);
+            showToast('Foto de perfil atualizada!');
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function alterarSenha() {
+    const senha = document.getElementById('profile-new-password').value;
+    const confirma = document.getElementById('profile-confirm-password').value;
+    const msg = document.getElementById('profile-msg');
+    msg.style.display = 'block';
+    if (!senha || senha.length < 6) {
+        msg.style.color = 'var(--red)'; msg.textContent = 'A senha deve ter pelo menos 6 caracteres.'; return;
+    }
+    if (senha !== confirma) {
+        msg.style.color = 'var(--red)'; msg.textContent = 'As senhas não coincidem.'; return;
+    }
+    const { error } = await sb.auth.updateUser({ password: senha });
+    if (error) {
+        msg.style.color = 'var(--red)'; msg.textContent = traduzErroAuth(error.message); return;
+    }
+    msg.style.color = 'var(--green)'; msg.textContent = 'Senha alterada com sucesso!';
+    document.getElementById('profile-new-password').value = '';
+    document.getElementById('profile-confirm-password').value = '';
+}
+
+// ─── BACKUP ────────────────────────────────────────────────────────────────
+
+function fazerBackup() {
+    const backup = {
+        geradoEm: new Date().toISOString(),
+        audiencias, magistrados, promotores
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dataStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `backup_audiencias_${dataStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Backup gerado com sucesso!');
+}
 
 function toSupabaseRow(a) {
     return {

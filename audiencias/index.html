@@ -1675,7 +1675,7 @@ function openPreencher(id) {
     lista.innerHTML = '';
     const reusPreso = a.reusPreso || (a.reuPreso ? reus.map((_,i) => i===0) : reus.map(()=>false));
     reus.forEach((r, i) => adicionarLinhaReu(r, reusPreso[i]));
-    document.getElementById('btn-editar-completo').onclick = () => { closePreencher(); openModal(id); };
+    document.getElementById('btn-editar-completo').onclick = () => { closePreencher(); openModal(id, true); };
     document.getElementById('preencher-modal').classList.add('open');
     document.getElementById('p-processo').focus();
 }
@@ -1751,11 +1751,11 @@ function addReuRowEdit() { adicionarLinhaReuEdit('', false); }
 
 // ─── CRUD MODAL ──────────────────────────────────────────────────────────────
 
-function openModal(id) {
+function openModal(id, force) {
     const a = audiencias.find(x => x.id === id);
     if (!a) return;
     // Slots sem processo abrem o modal simplificado de preenchimento
-    if (isSlot(a)) { openPreencher(id); return; }
+    if (isSlot(a) && !force) { openPreencher(id); return; }
     document.getElementById('modal-title').textContent = 'Editar Audiência';
     document.getElementById('edit-id').value = id;
 

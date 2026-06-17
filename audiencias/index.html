@@ -363,6 +363,7 @@
         <div>
             <h1 id="header-title"><i class="fas fa-calendar-days"></i> Audiências</h1>
             <p>7ª Vara Criminal da Comarca de Manaus · TJAM</p>
+            <p id="header-welcome" style="display:none;font-weight:600;color:var(--primary);"></p>
         </div>
     </div>
     <div class="header-actions">
@@ -558,9 +559,14 @@
 
 <!-- ===== VIEW: RELATÓRIOS ===== -->
 <section id="view-relatorios" style="display:none">
-    <div class="relatorio-header">
-        <h2><i class="fas fa-chart-bar"></i> Relatórios <span id="relatorio-ano-label"></span></h2>
-        <p class="relatorio-subtitle">Visão analítica das audiências pautadas</p>
+    <div class="relatorio-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.6rem;">
+        <div>
+            <h2><i class="fas fa-chart-bar"></i> Relatórios <span id="relatorio-ano-label"></span></h2>
+            <p class="relatorio-subtitle">Visão analítica das audiências pautadas</p>
+        </div>
+        <button class="filter-btn" onclick="abrirRelatorioPDF()" style="background:#fff3cd;color:#92400e;border-color:#fcd34d">
+            <i class="fas fa-file-pdf"></i> Gerar PDF Comparativo
+        </button>
     </div>
     <div class="stats-grid" id="rel-stats-grid">
         <div class="stat-card total"><div class="stat-label">Total Pautadas</div><div class="stat-value" id="r-total">0</div></div>
@@ -759,6 +765,15 @@
             <div style="width:100%;text-align:center;font-size:0.85rem;color:var(--muted);" id="profile-email"></div>
             <hr style="width:100%;border:none;border-top:1px solid #e2e8f0;">
             <div style="width:100%;display:flex;flex-direction:column;gap:0.5rem;">
+                <label style="font-size:0.72rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:0.4px;">Nome</label>
+                <input type="text" id="profile-name" placeholder="Seu nome completo" style="padding:0.6rem 0.75rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.9rem;">
+                <label style="font-size:0.72rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:0.4px;">Cargo</label>
+                <input type="text" id="profile-cargo" placeholder="Ex: Escrevente, Juiz, Promotor..." style="padding:0.6rem 0.75rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.9rem;">
+                <button class="btn-save" style="margin-top:0.2rem;" onclick="salvarDadosPerfil()"><i class="fas fa-floppy-disk"></i> Salvar Dados</button>
+                <div id="profile-data-msg" style="display:none;font-size:0.82rem;font-weight:600;text-align:center;"></div>
+            </div>
+            <hr style="width:100%;border:none;border-top:1px solid #e2e8f0;">
+            <div style="width:100%;display:flex;flex-direction:column;gap:0.5rem;">
                 <label style="font-size:0.72rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:0.4px;">Nova Senha</label>
                 <input type="password" id="profile-new-password" placeholder="••••••••" style="padding:0.6rem 0.75rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.9rem;">
                 <label style="font-size:0.72rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:0.4px;">Confirmar Senha</label>
@@ -766,6 +781,32 @@
                 <button class="btn-save" style="margin-top:0.4rem;" onclick="alterarSenha()"><i class="fas fa-key"></i> Alterar Senha</button>
                 <div id="profile-msg" style="display:none;font-size:0.82rem;font-weight:600;text-align:center;"></div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="relatorio-pdf-modal">
+    <div class="modal modal-sm">
+        <div class="modal-header">
+            <h2><i class="fas fa-file-pdf"></i> Relatório Comparativo</h2>
+            <button class="btn-close" onclick="closeRelatorioPDF()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:1rem;">
+            <div>
+                <label style="font-size:0.72rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:0.4px;">Anos a comparar</label>
+                <div id="rel-pdf-anos" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:0.4rem;"></div>
+            </div>
+            <div>
+                <label style="font-size:0.72rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:0.4px;">Dados a incluir</label>
+                <div id="rel-pdf-dados" style="display:flex;flex-direction:column;gap:6px;margin-top:0.4rem;">
+                    <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer"><input type="checkbox" id="rel-pdf-resumo" checked> Resumo Geral (totais por status)</label>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer"><input type="checkbox" id="rel-pdf-mes" checked> Audiências por Mês</label>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer"><input type="checkbox" id="rel-pdf-presos" checked> Réus Presos vs Soltos</label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-save" onclick="confirmarRelatorioPDF()"><i class="fas fa-file-pdf"></i> Gerar PDF</button>
         </div>
     </div>
 </div>
@@ -881,21 +922,34 @@ sb.auth.onAuthStateChange((event, session) => {
 function atualizarAvatarHeader(user) {
     if (!user) return;
     const avatarUrl = user.user_metadata && user.user_metadata.avatar_url;
+    const nome = user.user_metadata && user.user_metadata.full_name;
+    const cargo = user.user_metadata && user.user_metadata.cargo;
     const inicial = (user.email || '?').charAt(0).toUpperCase();
     const headerAvatar = document.getElementById('header-avatar');
     headerAvatar.innerHTML = avatarUrl ? `<img src="${avatarUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : inicial;
     const nameEl = document.getElementById('header-profile-name');
-    if (nameEl) nameEl.textContent = (user.email || 'Perfil').split('@')[0];
+    if (nameEl) nameEl.textContent = nome || (user.email || 'Perfil').split('@')[0];
+    const welcomeEl = document.getElementById('header-welcome');
+    if (welcomeEl) {
+        if (nome) {
+            welcomeEl.textContent = `Bem-vindo(a), ${nome}${cargo ? ' · ' + cargo : ''}`;
+            welcomeEl.style.display = '';
+        } else {
+            welcomeEl.style.display = 'none';
+        }
+    }
 }
 
 async function openProfile() {
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return;
     document.getElementById('profile-email').textContent = user.email;
+    document.getElementById('profile-name').value = (user.user_metadata && user.user_metadata.full_name) || '';
+    document.getElementById('profile-cargo').value = (user.user_metadata && user.user_metadata.cargo) || '';
     document.getElementById('profile-new-password').value = '';
     document.getElementById('profile-confirm-password').value = '';
-    const msg = document.getElementById('profile-msg');
-    msg.style.display = 'none';
+    document.getElementById('profile-msg').style.display = 'none';
+    document.getElementById('profile-data-msg').style.display = 'none';
     const avatarUrl = user.user_metadata && user.user_metadata.avatar_url;
     const inicial = (user.email || '?').charAt(0).toUpperCase();
     document.getElementById('profile-avatar-lg').innerHTML = avatarUrl ? `<img src="${avatarUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : inicial;
@@ -904,6 +958,19 @@ async function openProfile() {
 
 function closeProfile() {
     document.getElementById('profile-modal').classList.remove('open');
+}
+
+async function salvarDadosPerfil() {
+    const nome = document.getElementById('profile-name').value.trim();
+    const cargo = document.getElementById('profile-cargo').value.trim();
+    const msg = document.getElementById('profile-data-msg');
+    msg.style.display = 'block';
+    const { data, error } = await sb.auth.updateUser({ data: { full_name: nome, cargo } });
+    if (error) {
+        msg.style.color = 'var(--red)'; msg.textContent = 'Erro ao salvar: ' + error.message; return;
+    }
+    msg.style.color = 'var(--green)'; msg.textContent = 'Dados salvos com sucesso!';
+    atualizarAvatarHeader(data.user);
 }
 
 function onProfilePhotoSelected(event) {
@@ -1930,6 +1997,88 @@ function renderRelatorios() {
             options:{responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true}}}
         });
     } else { wrapper.style.display='none'; }
+}
+
+// ─── RELATÓRIO PDF COMPARATIVO ─────────────────────────────────────────────
+
+function abrirRelatorioPDF() {
+    const years = getAvailableYears();
+    if (!years.length) { showToast('Nenhum dado disponível para comparação', 'error'); return; }
+    const cont = document.getElementById('rel-pdf-anos');
+    cont.innerHTML = years.map(y => `<label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer">
+        <input type="checkbox" class="rel-pdf-ano-check" value="${y}" checked> ${y}</label>`).join('');
+    document.getElementById('relatorio-pdf-modal').classList.add('open');
+}
+
+function closeRelatorioPDF() {
+    document.getElementById('relatorio-pdf-modal').classList.remove('open');
+}
+
+function confirmarRelatorioPDF() {
+    const anosSelecionados = [...document.querySelectorAll('.rel-pdf-ano-check:checked')].map(c => Number(c.value));
+    if (!anosSelecionados.length) { showToast('Selecione ao menos um ano', 'error'); return; }
+    const incluirResumo = document.getElementById('rel-pdf-resumo').checked;
+    const incluirMes = document.getElementById('rel-pdf-mes').checked;
+    const incluirPresos = document.getElementById('rel-pdf-presos').checked;
+    if (!incluirResumo && !incluirMes && !incluirPresos) { showToast('Selecione ao menos um tipo de dado', 'error'); return; }
+    closeRelatorioPDF();
+    _imprimirRelatorioPDF(anosSelecionados, { incluirResumo, incluirMes, incluirPresos });
+}
+
+function _imprimirRelatorioPDF(anos, opts) {
+    const dataGeracao = new Date().toLocaleString('pt-BR');
+    let html = `<html><head><meta charset="UTF-8"><title>Relatório Comparativo - 7ª Vara Criminal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #2d3748; padding: 24px; }
+        h1 { font-size: 16px; color: #1a2a6c; margin-bottom: 2px; }
+        .sub { font-size: 11px; color: #718096; margin-bottom: 18px; }
+        h2 { font-size: 13px; color: #1a2a6c; margin: 22px 0 8px; border-bottom: 2px solid #1a2a6c; padding-bottom: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { border: 1px solid #cbd5e0; padding: 6px 8px; font-size: 11px; text-align: center; }
+        th { background: #1a2a6c; color: white; }
+        td:first-child, th:first-child { text-align: left; }
+    </style></head><body>
+    <h1>Relatório Comparativo de Audiências</h1>
+    <div class="sub">7ª Vara Criminal da Comarca de Manaus · TJAM &nbsp;·&nbsp; Anos: ${anos.sort().join(', ')} &nbsp;·&nbsp; Gerado em ${dataGeracao}</div>`;
+
+    if (opts.incluirResumo) {
+        html += `<h2>Resumo Geral por Status</h2><table><thead><tr><th>Indicador</th>${anos.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
+        const linhas = [
+            ['Total Pautadas', 'total'], ['Realizadas', 'realizada'], ['Parc. Realizadas', 'parcial'],
+            ['Redesignadas', 'redesignada'], ['Pendentes', 'pendente'], ['Canceladas', 'cancelada'], ['Réus Presos', 'preso'],
+        ];
+        const statsPorAno = {};
+        anos.forEach(y => statsPorAno[y] = countStats(audiencias.filter(a => (a.ano||2026)===y)));
+        linhas.forEach(([label, key]) => {
+            html += `<tr><td>${label}</td>${anos.map(y=>`<td>${statsPorAno[y][key]}</td>`).join('')}</tr>`;
+        });
+        html += `</tbody></table>`;
+    }
+
+    if (opts.incluirMes) {
+        html += `<h2>Audiências por Mês</h2><table><thead><tr><th>Mês</th>${anos.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
+        MESES.forEach(m => {
+            html += `<tr><td>${m}</td>${anos.map(y=>`<td>${audiencias.filter(a=>(a.ano||2026)===y && a.mes===m).length}</td>`).join('')}</tr>`;
+        });
+        html += `</tbody></table>`;
+    }
+
+    if (opts.incluirPresos) {
+        html += `<h2>Réus Presos vs Soltos</h2><table><thead><tr><th>Ano</th><th>Presos</th><th>Soltos</th><th>Total</th></tr></thead><tbody>`;
+        anos.forEach(y => {
+            const dadosAno = audiencias.filter(a => (a.ano||2026)===y);
+            const presos = dadosAno.filter(a => a.reuPreso).length;
+            const total = dadosAno.length;
+            html += `<tr><td>${y}</td><td>${presos}</td><td>${total - presos}</td><td>${total}</td></tr>`;
+        });
+        html += `</tbody></table>`;
+    }
+
+    html += `</body></html>`;
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
+    win.onload = () => { win.focus(); win.print(); };
 }
 
 // ─── EXPORTAR PDF ────────────────────────────────────────────────────────────

@@ -287,6 +287,7 @@
             .preencher-info { gap: 0.75rem; }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -702,10 +703,35 @@ let nextId       = 500;
 let chartInstances = {};
 let cadastroSection = 'magistrados';
 
-// ─── DATA LAYER ──────────────────────────────────────────────────────────────
+// ─── DATA LAYER (Supabase) ────────────────────────────────────────────────────
 
-function loadData() {
-    // Migrate v1 → v2
+const SUPABASE_URL = 'https://qcvietuczbysditpkopr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjdmlldHVjemJ5c2RpdHBrb3ByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MjkzMjIsImV4cCI6MjA5NzIwNTMyMn0.HcQ5AAwaM9WP9MAm3KSO5LtJKhUzTIRkpaIGeW2n_os';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function toSupabaseRow(a) {
+    return {
+        id: a.id, ano: a.ano, mes: a.mes, data: a.data || null, hora: a.hora,
+        processo: a.processo, reu: a.reu, magistrado: a.magistrado, promotor: a.promotor,
+        status: a.status, pendencias: a.pendencias, observacoes: a.observacoes,
+        reu_preso: !!a.reuPreso, reus_preso: a.reusPreso || [],
+        projudi: !!a.projudi, intimacoes: !!a.intimacoes, termo: !!a.termo,
+        criado_em: a.criadoEm || null,
+    };
+}
+function fromSupabaseRow(r) {
+    return {
+        id: r.id, ano: r.ano, mes: r.mes, data: r.data, hora: r.hora,
+        processo: r.processo, reu: r.reu, magistrado: r.magistrado, promotor: r.promotor,
+        status: r.status, pendencias: r.pendencias, observacoes: r.observacoes,
+        reuPreso: r.reu_preso, reusPreso: r.reus_preso || [],
+        projudi: r.projudi, intimacoes: r.intimacoes, termo: r.termo,
+        criadoEm: r.criado_em,
+    };
+}
+
+function seedLocalData() {
+    // Migrate v1 → v2 (legacy localStorage)
     const legacy = localStorage.getItem(STORAGE_KEY_LEGACY);
     if (legacy && !localStorage.getItem(STORAGE_KEY)) {
         try {
@@ -718,26 +744,116 @@ function loadData() {
     if (saved) {
         try {
             audiencias = JSON.parse(saved).map(a => ({...a, ano: a.ano || 2026}));
-            nextId = audiencias.length ? Math.max(...audiencias.map(a => a.id)) + 1 : 500;
-        } catch(e) { seedData(); }
-    } else { seedData(); }
-
-    // Cadastros
+        } catch(e) { audiencias = JSON.parse(JSON.stringify(SEED_DATA)).map(a => ({...a, ano: 2026})); }
+    } else {
+        audiencias = JSON.parse(JSON.stringify(SEED_DATA)).map(a => ({...a, ano: 2026}));
+    }
     magistrados = JSON.parse(localStorage.getItem(STORAGE_MAG) || 'null') ||
         [...new Set(audiencias.map(a => a.magistrado).filter(Boolean))].sort().map(n => ({nome: n, ativo: true}));
     promotores = JSON.parse(localStorage.getItem(STORAGE_PRO) || 'null') ||
         [...new Set(audiencias.map(a => a.promotor).filter(Boolean))].sort().map(n => ({nome: n, ativo: true}));
-    saveCadastros();
 }
 
-function seedData() {
-    audiencias = JSON.parse(JSON.stringify(SEED_DATA)).map(a => ({...a, ano: 2026}));
-    nextId = 438; saveData();
+async function initApp() {
+    try {
+        const { data: rows, error } = await sb.from('audiencias').select('*');
+        if (error) throw error;
+
+        if (!rows || rows.length === 0) {
+            // First-ever run: seed from local/legacy storage or SEED_DATA, then push to Supabase
+            seedLocalData();
+            if (audiencias.length) {
+                await sb.from('audiencias').upsert(audiencias.map(toSupabaseRow));
+            }
+            await sb.from('magistrados').delete().neq('id', -1);
+            if (magistrados.length) await sb.from('magistrados').insert(magistrados.map(m => ({nome: m.nome, ativo: m.ativo})));
+            await sb.from('promotores').delete().neq('id', -1);
+            if (promotores.length) await sb.from('promotores').insert(promotores.map(p => ({nome: p.nome, ativo: p.ativo})));
+        } else {
+            audiencias = rows.map(fromSupabaseRow);
+            const { data: mags } = await sb.from('magistrados').select('*').order('id');
+            const { data: pros } = await sb.from('promotores').select('*').order('id');
+            magistrados = (mags || []).map(m => ({nome: m.nome, ativo: m.ativo}));
+            promotores = (pros || []).map(p => ({nome: p.nome, ativo: p.ativo}));
+            if (!magistrados.length) {
+                magistrados = [...new Set(audiencias.map(a => a.magistrado).filter(Boolean))].sort().map(n => ({nome: n, ativo: true}));
+            }
+            if (!promotores.length) {
+                promotores = [...new Set(audiencias.map(a => a.promotor).filter(Boolean))].sort().map(n => ({nome: n, ativo: true}));
+            }
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(audiencias));
+        localStorage.setItem(STORAGE_MAG, JSON.stringify(magistrados));
+        localStorage.setItem(STORAGE_PRO, JSON.stringify(promotores));
+    } catch (e) {
+        console.error('Supabase init error, falling back to local storage', e);
+        seedLocalData();
+        showToast('Modo offline — sincronização indisponível', 'error');
+    }
+
+    nextId = audiencias.length ? Math.max(...audiencias.map(a => a.id)) + 1 : 500;
+
+    const initYears = getAvailableYears();
+    currentAno = initYears.includes(2026) ? 2026 : (initYears[0] || 2026);
+    render();
+
+    subscribeRealtime();
 }
-function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(audiencias)); }
-function saveCadastros() {
+
+function subscribeRealtime() {
+    sb.channel('audiencias-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audiencias' }, payload => {
+          handleRealtimeAudiencia(payload);
+      })
+      .subscribe();
+    sb.channel('cadastros-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'magistrados' }, () => reloadCadastros())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'promotores' }, () => reloadCadastros())
+      .subscribe();
+}
+
+function handleRealtimeAudiencia(payload) {
+    if (payload.eventType === 'DELETE') {
+        audiencias = audiencias.filter(a => a.id !== payload.old.id);
+    } else {
+        const updated = fromSupabaseRow(payload.new);
+        const idx = audiencias.findIndex(a => a.id === updated.id);
+        if (idx >= 0) audiencias[idx] = updated; else audiencias.push(updated);
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(audiencias));
+    nextId = audiencias.length ? Math.max(nextId, ...audiencias.map(a => a.id)) + 1 : nextId;
+    if (currentView === 'agenda') render(); else if (currentView === 'relatorios') renderRelatorios();
+}
+
+async function reloadCadastros() {
+    try {
+        const { data: mags } = await sb.from('magistrados').select('*').order('id');
+        const { data: pros } = await sb.from('promotores').select('*').order('id');
+        magistrados = (mags || []).map(m => ({nome: m.nome, ativo: m.ativo}));
+        promotores = (pros || []).map(p => ({nome: p.nome, ativo: p.ativo}));
+        localStorage.setItem(STORAGE_MAG, JSON.stringify(magistrados));
+        localStorage.setItem(STORAGE_PRO, JSON.stringify(promotores));
+        if (typeof renderCadastroList === 'function') renderCadastroList();
+        buildSelectores();
+    } catch (e) { console.error('Supabase reloadCadastros error', e); }
+}
+
+async function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(audiencias));
+    try {
+        await sb.from('audiencias').upsert(audiencias.map(toSupabaseRow));
+    } catch (e) { console.error('Supabase save error', e); }
+}
+
+async function saveCadastros() {
     localStorage.setItem(STORAGE_MAG, JSON.stringify(magistrados));
     localStorage.setItem(STORAGE_PRO, JSON.stringify(promotores));
+    try {
+        await sb.from('magistrados').delete().neq('id', -1);
+        if (magistrados.length) await sb.from('magistrados').insert(magistrados.map(m => ({nome: m.nome, ativo: m.ativo})));
+        await sb.from('promotores').delete().neq('id', -1);
+        if (promotores.length) await sb.from('promotores').insert(promotores.map(p => ({nome: p.nome, ativo: p.ativo})));
+    } catch (e) { console.error('Supabase cadastro save error', e); }
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -1350,7 +1466,11 @@ function saveAudiencia() {
 function deleteAudiencia(id) {
     if (!confirm('Excluir esta audiência?')) return;
     audiencias = audiencias.filter(a => a.id !== id);
-    saveData();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(audiencias));
+    (async () => {
+        try { await sb.from('audiencias').delete().eq('id', id); }
+        catch (e) { console.error('Supabase delete error', e); }
+    })();
     if (currentView==='agenda') render(); else renderRelatorios();
     showToast('Audiência excluída','error');
 }
@@ -1702,10 +1822,7 @@ function showToast(msg, type='') {
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
-loadData();
-const initYears = getAvailableYears();
-currentAno = initYears.includes(2026) ? 2026 : (initYears[0] || 2026);
-render();
+initApp();
 </script>
 </body>
 </html>

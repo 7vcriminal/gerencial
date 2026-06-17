@@ -564,9 +564,18 @@
             <h2><i class="fas fa-chart-bar"></i> Relatórios <span id="relatorio-ano-label"></span></h2>
             <p class="relatorio-subtitle">Visão analítica das audiências pautadas</p>
         </div>
-        <button class="filter-btn" onclick="abrirRelatorioPDF()" style="background:#fff3cd;color:#92400e;border-color:#fcd34d">
-            <i class="fas fa-file-pdf"></i> Gerar PDF Comparativo
-        </button>
+        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;color:var(--muted)">
+                <label for="rel-filtro-de">De:</label>
+                <input type="date" id="rel-filtro-de" style="padding:0.35rem 0.5rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.82rem;">
+                <label for="rel-filtro-ate">Até:</label>
+                <input type="date" id="rel-filtro-ate" style="padding:0.35rem 0.5rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.82rem;">
+                <button class="filter-btn" onclick="limparFiltroPeriodoRelatorio()" title="Limpar período"><i class="fas fa-eraser"></i></button>
+            </div>
+            <button class="filter-btn" onclick="abrirRelatorioPDF()" style="background:#fff3cd;color:#92400e;border-color:#fcd34d">
+                <i class="fas fa-file-pdf"></i> Gerar PDF Comparativo
+            </button>
+        </div>
     </div>
     <div class="stats-grid" id="rel-stats-grid">
         <div class="stat-card total"><div class="stat-label">Total Pautadas</div><div class="stat-value" id="r-total">0</div></div>
@@ -834,6 +843,8 @@ let filterStatus = '';
 let filterMagistrado = '';
 let filterDataDe = '';
 let filterDataAte = '';
+let relFilterDataDe = '';
+let relFilterDataAte = '';
 let filterPreso  = false;
 let filterAlerta = false;
 let activeCard   = 'total';
@@ -1168,10 +1179,10 @@ async function reloadCadastros() {
     } catch (e) { console.error('Supabase reloadCadastros error', e); }
 }
 
-async function saveData() {
+async function saveData(rows) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(audiencias));
     try {
-        await sb.from('audiencias').upsert(audiencias.map(toSupabaseRow));
+        await sb.from('audiencias').upsert((rows || audiencias).map(toSupabaseRow));
     } catch (e) { console.error('Supabase save error', e); }
 }
 
@@ -1549,6 +1560,15 @@ function limparDatas() {
     render();
 }
 
+document.getElementById('rel-filtro-de').addEventListener('change',  e => { relFilterDataDe  = e.target.value; renderRelatorios(); });
+document.getElementById('rel-filtro-ate').addEventListener('change', e => { relFilterDataAte = e.target.value; renderRelatorios(); });
+function limparFiltroPeriodoRelatorio() {
+    relFilterDataDe = relFilterDataAte = '';
+    document.getElementById('rel-filtro-de').value = '';
+    document.getElementById('rel-filtro-ate').value = '';
+    renderRelatorios();
+}
+
 // ─── LOTE DE HORÁRIOS ────────────────────────────────────────────────────────
 
 function toggleLote() {
@@ -1594,16 +1614,19 @@ function gerarLote() {
     const pro   = document.getElementById('q-promotor').value;
     if (!data) { showToast('Informe a data', 'error'); return; }
     const horarios = calcLoteHorarios();
+    const novas = [];
     horarios.forEach(hora => {
-        audiencias.push({
+        const nova = {
             id: nextId++, ano, mes, data, hora,
             processo: '', reu: '', magistrado: mag, promotor: pro,
             status: '', pendencias: '', observacoes: '',
             reuPreso: false, projudi: false, intimacoes: false, termo: false,
             criadoEm: new Date().toISOString().slice(0,10),
-        });
+        };
+        audiencias.push(nova);
+        novas.push(nova);
     });
-    saveData();
+    saveData(novas);
     currentAno = ano;
     render();
     showToast(`${horarios.length} horários criados em ${fmtData(data)}!`, 'success');
@@ -1616,7 +1639,7 @@ function toggleField(id, field) {
     const a = audiencias.find(x => x.id === id);
     if (!a) return;
     a[field] = !a[field];
-    saveData();
+    saveData([a]);
     render();
 }
 
@@ -1691,7 +1714,7 @@ function salvarPreencher() {
     a.reu = reus.join(' / ');
     a.reusPreso = reusPreso;
     a.reuPreso = reusPreso.some(Boolean);
-    saveData();
+    saveData([a]);
     closePreencher();
     render();
     showToast('Audiência preenchida!', 'success');
@@ -1787,7 +1810,7 @@ function saveAudiencia() {
     };
     const idx = audiencias.findIndex(a => a.id === id);
     if (idx >= 0) audiencias[idx] = obj;
-    saveData();
+    saveData([obj]);
     closeModal();
     render();
     showToast('Audiência salva!', 'success');
@@ -1924,7 +1947,11 @@ const CC = {
 };
 
 function renderRelatorios() {
-    const data = getDataScoped();
+    const data = getDataScoped().filter(a => {
+        if (relFilterDataDe  && (!a.data || a.data < relFilterDataDe))  return false;
+        if (relFilterDataAte && (!a.data || a.data > relFilterDataAte)) return false;
+        return true;
+    });
     document.getElementById('relatorio-ano-label').textContent =
         currentAno==='Historico' ? '· Todos os Anos' : `· ${currentAno}`;
     updateStatsCards('r', data);

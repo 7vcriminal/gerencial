@@ -170,9 +170,11 @@
         .badge-preso { display: inline-flex; align-items: center; gap: 4px; background: #fdecea; color: var(--red); padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; }
         .badge-solto { display: inline-flex; align-items: center; gap: 4px; background: #e8f5e9; color: var(--green); padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; }
         .slot-badge { display: inline-flex; align-items: center; gap: 4px; background: #d1fae5; color: #059669; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; }
-        .prioridade-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
-        .prio-check { display:flex;align-items:center;gap:6px;font-size:0.78rem;font-weight:700;color:#c2540a;background:#fff4e5;border:1px solid #fcd9a8;border-radius:8px;padding:0.45rem 0.6rem;cursor:pointer; }
-        .prio-check input { accent-color:#c2540a;width:14px;height:14px; }
+        .prioridade-row { display: flex; flex-wrap: nowrap; gap: 6px; margin-bottom: 1rem; }
+        .prioridade-row.inline { display: contents; }
+        .prio-check { display:flex;align-items:center;gap:5px;font-size:0.74rem;font-weight:700;color:#c2540a;background:#fff4e5;border:1px solid #fcd9a8;border-radius:8px;padding:0.4rem 0.5rem;cursor:pointer;white-space:nowrap; }
+        .prioridade-row:not(.inline) .prio-check { flex:1; justify-content:center; }
+        .prio-check input { accent-color:#c2540a;width:14px;height:14px;flex-shrink:0; }
         .prio-badges { display: inline-flex; gap: 3px; margin-left: 4px; }
         .prio-badges i { font-size: 0.7rem; color: #5b21b6; }
         .status-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
@@ -681,12 +683,6 @@
                 <input type="checkbox" id="f-reservado" onchange="toggleReservado('f')" style="accent-color:#c2540a;width:16px;height:16px">
                 <i class="fas fa-lock"></i> Reservado - Réu Preso
             </label>
-            <div class="prioridade-row" id="f-prioridade-row">
-                <label class="prio-check"><input type="checkbox" data-key="idoso" onchange="togglePrioBtn(this)"><i class="fas fa-person-cane"></i> Idoso</label>
-                <label class="prio-check"><input type="checkbox" data-key="hediondo" onchange="togglePrioBtn(this)"><i class="fas fa-skull-crossbones"></i> Hediondo</label>
-                <label class="prio-check"><input type="checkbox" data-key="violencia" onchange="togglePrioBtn(this)"><i class="fas fa-house-chimney-crack"></i> Viol. Doméstica</label>
-                <label class="prio-check"><input type="checkbox" data-key="meta2" onchange="togglePrioBtn(this)"><i class="fas fa-hourglass-half"></i> Meta 2+</label>
-            </div>
             <div class="form-grid">
                 <div class="form-group">
                     <label>Ano</label>
@@ -754,6 +750,12 @@
                     <label>Situação</label>
                     <div class="form-checks">
                         <label class="form-check"><input type="checkbox" id="f-preso"> <i class="fas fa-handcuffs" style="color:var(--red)"></i> Réu Preso</label>
+                        <div class="prioridade-row inline" id="f-prioridade-row">
+                            <label class="prio-check"><input type="checkbox" data-key="idoso" onchange="togglePrioBtn(this)"><i class="fas fa-person-cane"></i> Idoso</label>
+                            <label class="prio-check"><input type="checkbox" data-key="hediondo" onchange="togglePrioBtn(this)"><i class="fas fa-skull-crossbones"></i> Hediondo</label>
+                            <label class="prio-check"><input type="checkbox" data-key="violencia" onchange="togglePrioBtn(this)"><i class="fas fa-house-chimney-crack"></i> Viol. Doméstica</label>
+                            <label class="prio-check"><input type="checkbox" data-key="meta2" onchange="togglePrioBtn(this)"><i class="fas fa-hourglass-half"></i> Meta 2+</label>
+                        </div>
                         <label class="form-check"><input type="checkbox" id="f-projudi"> <i class="fas fa-laptop-code" style="color:var(--blue)"></i> PROJUDI</label>
                         <label class="form-check"><input type="checkbox" id="f-intimacoes"> <i class="fas fa-envelope" style="color:var(--primary)"></i> Intimações</label>
                         <label class="form-check"><input type="checkbox" id="f-termo"> <i class="fas fa-file-signature" style="color:var(--green)"></i> Termo</label>
@@ -1728,7 +1730,8 @@ function openPreencher(id) {
     setPrioridades('p', a);
     document.getElementById('btn-editar-completo').onclick = () => { closePreencher(); openModal(id, true); };
     document.getElementById('preencher-modal').classList.add('open');
-    document.getElementById('p-processo').focus();
+    document.querySelector('#preencher-modal .modal').scrollTop = 0;
+    document.getElementById('p-processo').focus({ preventScroll: true });
 }
 
 function closePreencher() { document.getElementById('preencher-modal').classList.remove('open'); }
@@ -1888,6 +1891,7 @@ function openModal(id, force) {
     document.getElementById('f-promotor').value   = a.promotor   || '';
 
     document.getElementById('form-modal').classList.add('open');
+    document.querySelector('#form-modal .modal').scrollTop = 0;
 }
 function closeModal() { document.getElementById('form-modal').classList.remove('open'); }
 

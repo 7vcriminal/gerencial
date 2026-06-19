@@ -683,6 +683,12 @@
                 <input type="checkbox" id="f-reservado" onchange="toggleReservado('f')" style="accent-color:#c2540a;width:16px;height:16px">
                 <i class="fas fa-lock"></i> Reservado - Réu Preso
             </label>
+            <div class="prioridade-row" id="f-prioridade-row">
+                <label class="prio-check"><input type="checkbox" data-key="idoso" onchange="togglePrioBtn(this)"><i class="fas fa-person-cane"></i> Idoso</label>
+                <label class="prio-check"><input type="checkbox" data-key="hediondo" onchange="togglePrioBtn(this)"><i class="fas fa-skull-crossbones"></i> Hediondo</label>
+                <label class="prio-check"><input type="checkbox" data-key="violencia" onchange="togglePrioBtn(this)"><i class="fas fa-house-chimney-crack"></i> Viol. Doméstica</label>
+                <label class="prio-check"><input type="checkbox" data-key="meta2" onchange="togglePrioBtn(this)"><i class="fas fa-hourglass-half"></i> Meta 2+</label>
+            </div>
             <div class="form-grid">
                 <div class="form-group">
                     <label>Ano</label>
@@ -750,12 +756,6 @@
                     <label>Situação</label>
                     <div class="form-checks">
                         <label class="form-check"><input type="checkbox" id="f-preso"> <i class="fas fa-handcuffs" style="color:var(--red)"></i> Réu Preso</label>
-                        <div class="prioridade-row inline" id="f-prioridade-row">
-                            <label class="prio-check"><input type="checkbox" data-key="idoso" onchange="togglePrioBtn(this)"><i class="fas fa-person-cane"></i> Idoso</label>
-                            <label class="prio-check"><input type="checkbox" data-key="hediondo" onchange="togglePrioBtn(this)"><i class="fas fa-skull-crossbones"></i> Hediondo</label>
-                            <label class="prio-check"><input type="checkbox" data-key="violencia" onchange="togglePrioBtn(this)"><i class="fas fa-house-chimney-crack"></i> Viol. Doméstica</label>
-                            <label class="prio-check"><input type="checkbox" data-key="meta2" onchange="togglePrioBtn(this)"><i class="fas fa-hourglass-half"></i> Meta 2+</label>
-                        </div>
                         <label class="form-check"><input type="checkbox" id="f-projudi"> <i class="fas fa-laptop-code" style="color:var(--blue)"></i> PROJUDI</label>
                         <label class="form-check"><input type="checkbox" id="f-intimacoes"> <i class="fas fa-envelope" style="color:var(--primary)"></i> Intimações</label>
                         <label class="form-check"><input type="checkbox" id="f-termo"> <i class="fas fa-file-signature" style="color:var(--green)"></i> Termo</label>

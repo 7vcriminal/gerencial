@@ -171,9 +171,8 @@
         .badge-solto { display: inline-flex; align-items: center; gap: 4px; background: #e8f5e9; color: var(--green); padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; }
         .slot-badge { display: inline-flex; align-items: center; gap: 4px; background: #d1fae5; color: #059669; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; }
         .prioridade-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
-        .prio-btn { display: flex; align-items: center; gap: 5px; padding: 0.35rem 0.6rem; border-radius: 50px; border: 1px solid #e2e8f0; background: white; color: var(--muted); font-family: inherit; font-size: 0.74rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
-        .prio-btn:hover { border-color: #94a3b8; }
-        .prio-btn.active { background: #5b21b6; color: white; border-color: #5b21b6; }
+        .prio-check { display:flex;align-items:center;gap:6px;font-size:0.78rem;font-weight:700;color:#c2540a;background:#fff4e5;border:1px solid #fcd9a8;border-radius:8px;padding:0.45rem 0.6rem;cursor:pointer; }
+        .prio-check input { accent-color:#c2540a;width:14px;height:14px; }
         .prio-badges { display: inline-flex; gap: 3px; margin-left: 4px; }
         .prio-badges i { font-size: 0.7rem; color: #5b21b6; }
         .status-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
@@ -639,10 +638,10 @@
                 <i class="fas fa-lock"></i> Reservado - Réu Preso
             </label>
             <div class="prioridade-row" id="p-prioridade-row">
-                <button type="button" class="prio-btn" data-key="idoso" onclick="togglePrioBtn(this)" title="Idoso"><i class="fas fa-person-cane"></i> Idoso</button>
-                <button type="button" class="prio-btn" data-key="hediondo" onclick="togglePrioBtn(this)" title="Hediondo"><i class="fas fa-skull-crossbones"></i> Hediondo</button>
-                <button type="button" class="prio-btn" data-key="violencia" onclick="togglePrioBtn(this)" title="Violência Doméstica"><i class="fas fa-house-chimney-crack"></i> Viol. Doméstica</button>
-                <button type="button" class="prio-btn" data-key="meta2" onclick="togglePrioBtn(this)" title="Meta 2+"><i class="fas fa-hourglass-half"></i> Meta 2+</button>
+                <label class="prio-check"><input type="checkbox" data-key="idoso" onchange="togglePrioBtn(this)"><i class="fas fa-person-cane"></i> Idoso</label>
+                <label class="prio-check"><input type="checkbox" data-key="hediondo" onchange="togglePrioBtn(this)"><i class="fas fa-skull-crossbones"></i> Hediondo</label>
+                <label class="prio-check"><input type="checkbox" data-key="violencia" onchange="togglePrioBtn(this)"><i class="fas fa-house-chimney-crack"></i> Viol. Doméstica</label>
+                <label class="prio-check"><input type="checkbox" data-key="meta2" onchange="togglePrioBtn(this)"><i class="fas fa-hourglass-half"></i> Meta 2+</label>
             </div>
             <div class="form-group" style="margin-bottom:1rem">
                 <label style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px">Nº do Processo</label>
@@ -682,10 +681,10 @@
                 <i class="fas fa-lock"></i> Reservado - Réu Preso
             </label>
             <div class="prioridade-row" id="f-prioridade-row">
-                <button type="button" class="prio-btn" data-key="idoso" onclick="togglePrioBtn(this)" title="Idoso"><i class="fas fa-person-cane"></i> Idoso</button>
-                <button type="button" class="prio-btn" data-key="hediondo" onclick="togglePrioBtn(this)" title="Hediondo"><i class="fas fa-skull-crossbones"></i> Hediondo</button>
-                <button type="button" class="prio-btn" data-key="violencia" onclick="togglePrioBtn(this)" title="Violência Doméstica"><i class="fas fa-house-chimney-crack"></i> Viol. Doméstica</button>
-                <button type="button" class="prio-btn" data-key="meta2" onclick="togglePrioBtn(this)" title="Meta 2+"><i class="fas fa-hourglass-half"></i> Meta 2+</button>
+                <label class="prio-check"><input type="checkbox" data-key="idoso" onchange="togglePrioBtn(this)"><i class="fas fa-person-cane"></i> Idoso</label>
+                <label class="prio-check"><input type="checkbox" data-key="hediondo" onchange="togglePrioBtn(this)"><i class="fas fa-skull-crossbones"></i> Hediondo</label>
+                <label class="prio-check"><input type="checkbox" data-key="violencia" onchange="togglePrioBtn(this)"><i class="fas fa-house-chimney-crack"></i> Viol. Doméstica</label>
+                <label class="prio-check"><input type="checkbox" data-key="meta2" onchange="togglePrioBtn(this)"><i class="fas fa-hourglass-half"></i> Meta 2+</label>
             </div>
             <div class="form-grid">
                 <div class="form-group">
@@ -1422,7 +1421,7 @@ function renderTable(filtered) {
         <tr class="${a.reservado?'reservado-row':(a.reuPreso?'preso-row':'')} ${slot?'slot-row':''} ${al.length?'has-alert':''}" onclick="openModal(${a.id})" style="cursor:pointer">
             <td class="data">${fmtData(a.data)}${showAno?`<br><small style="color:var(--muted)">${a.ano||2026}</small>`:''}</td>
             <td class="hora">${a.hora||'--:--'}</td>
-            <td class="reu">${a.reservado ? '<span class="reu-nome" style="color:#c2540a;font-weight:700"><i class="fas fa-lock"></i> RESERVADO REU PRESO</span>' : (slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu ? a.reu.split(' / ').map((n, i) => { const preso = a.reusPreso ? a.reusPreso[i] : (a.reuPreso && i===0); return `<span class="reu-nome" ${preso?'style="color:var(--red)"':''}>${preso ? '<span class="badge-preso" style="flex-shrink:0"><i class="fas fa-handcuffs"></i></span> ' : ''}${n}</span>`; }).join('') : '—'))}${prioBadges ? `<span class="prio-badges">${prioBadges}</span>` : ''}</td>
+            <td class="reu">${a.reservado ? '<span class="reu-nome" style="color:#c2540a;font-weight:700"><i class="fas fa-lock"></i> RESERVADO REU PRESO</span>' : (slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu ? a.reu.split(' / ').map((n, i) => { const preso = a.reusPreso ? a.reusPreso[i] : (a.reuPreso && i===0); return `<span class="reu-nome" ${preso?'style="color:var(--red)"':''}>${preso ? '<span class="badge-preso" style="flex-shrink:0"><i class="fas fa-handcuffs"></i></span> ' : ''}${n}${i===0 && prioBadges ? `<span class="prio-badges" style="flex-shrink:0">${prioBadges}</span>` : ''}</span>`; }).join('') : '—'))}</td>
             <td class="processo">${a.processo||'<span style="color:#cbd5e0;font-style:italic">— aguardando —</span>'}</td>
             <td class="magistrado">${a.magistrado||'—'}</td>
             <td class="promotor" style="font-size:0.8rem;color:var(--muted)">${a.promotor||'—'}</td>
@@ -1804,15 +1803,13 @@ function toggleReservado(prefix) {
 
 const PRIORIDADE_MAP = { idoso: 'prioIdoso', hediondo: 'prioHediondo', violencia: 'prioViolencia', meta2: 'prioMeta2' };
 
-function togglePrioBtn(btn) {
-    btn.classList.toggle('active');
-}
+function togglePrioBtn(input) {}
 
 function getPrioridades(prefix) {
     const row = document.getElementById(prefix + '-prioridade-row');
     const result = {};
     Object.entries(PRIORIDADE_MAP).forEach(([key, field]) => {
-        result[field] = row.querySelector(`[data-key="${key}"]`).classList.contains('active');
+        result[field] = row.querySelector(`[data-key="${key}"]`).checked;
     });
     return result;
 }
@@ -1820,7 +1817,7 @@ function getPrioridades(prefix) {
 function setPrioridades(prefix, a) {
     const row = document.getElementById(prefix + '-prioridade-row');
     Object.entries(PRIORIDADE_MAP).forEach(([key, field]) => {
-        row.querySelector(`[data-key="${key}"]`).classList.toggle('active', !!a[field]);
+        row.querySelector(`[data-key="${key}"]`).checked = !!a[field];
     });
 }
 

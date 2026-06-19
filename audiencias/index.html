@@ -1476,8 +1476,7 @@ function getAlertas(a) {
 
     // Sem data: audiência cadastrada mas ainda não datada
     if (!a.data) {
-        const diffCriacao = diasDiff(a.criadoEm);
-        if (diffCriacao !== null && diffCriacao >= 1) alertas.push('semdata');
+        alertas.push('semdata');
         return alertas;
     }
 

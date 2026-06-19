@@ -530,6 +530,7 @@
             <option value="Pendente">Pendente (sem status)</option>
             <option value="SemData">⏰ Sem data/hora</option>
             <option value="Reservado">🔒 Reservado - Réu Preso</option>
+            <option value="Idoso">👴 Prioridade - Idoso</option>
         </select>
         <select id="filter-magistrado">
             <option value="">Todos os magistrados</option>
@@ -1272,6 +1273,7 @@ function getFiltered() {
         if (filterStatus) {
             if (filterStatus === 'SemData') { if (a.data) return false; }
             else if (filterStatus === 'Reservado') { if (!a.reservado) return false; }
+            else if (filterStatus === 'Idoso') { if (!a.prioIdoso) return false; }
             else if (filterStatus === 'Pendente' && a.status) return false;
             else if (filterStatus !== 'Pendente' && a.status !== filterStatus) return false;
         }

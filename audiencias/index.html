@@ -170,6 +170,12 @@
         .badge-preso { display: inline-flex; align-items: center; gap: 4px; background: #fdecea; color: var(--red); padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; }
         .badge-solto { display: inline-flex; align-items: center; gap: 4px; background: #e8f5e9; color: var(--green); padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; }
         .slot-badge { display: inline-flex; align-items: center; gap: 4px; background: #d1fae5; color: #059669; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; }
+        .prioridade-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
+        .prio-btn { display: flex; align-items: center; gap: 5px; padding: 0.35rem 0.6rem; border-radius: 50px; border: 1px solid #e2e8f0; background: white; color: var(--muted); font-family: inherit; font-size: 0.74rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .prio-btn:hover { border-color: #94a3b8; }
+        .prio-btn.active { background: #5b21b6; color: white; border-color: #5b21b6; }
+        .prio-badges { display: inline-flex; gap: 3px; margin-left: 4px; }
+        .prio-badges i { font-size: 0.7rem; color: #5b21b6; }
         .status-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
         .s-realizada { background: #e8f5e9; color: var(--green); }
         .s-parcial   { background: #fff9e6; color: #e67e22; }
@@ -632,6 +638,12 @@
                 <input type="checkbox" id="p-reservado" onchange="toggleReservado('p')" style="accent-color:#c2540a;width:16px;height:16px">
                 <i class="fas fa-lock"></i> Reservado - Réu Preso
             </label>
+            <div class="prioridade-row" id="p-prioridade-row">
+                <button type="button" class="prio-btn" data-key="idoso" onclick="togglePrioBtn(this)" title="Idoso"><i class="fas fa-person-cane"></i> Idoso</button>
+                <button type="button" class="prio-btn" data-key="hediondo" onclick="togglePrioBtn(this)" title="Hediondo"><i class="fas fa-skull-crossbones"></i> Hediondo</button>
+                <button type="button" class="prio-btn" data-key="violencia" onclick="togglePrioBtn(this)" title="Violência Doméstica"><i class="fas fa-house-chimney-crack"></i> Viol. Doméstica</button>
+                <button type="button" class="prio-btn" data-key="meta2" onclick="togglePrioBtn(this)" title="Meta 2+"><i class="fas fa-hourglass-half"></i> Meta 2+</button>
+            </div>
             <div class="form-group" style="margin-bottom:1rem">
                 <label style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px">Nº do Processo</label>
                 <input type="text" id="p-processo" placeholder="0000000-00.0000.8.04.0001" oninput="maskProcesso(this)"
@@ -669,6 +681,12 @@
                 <input type="checkbox" id="f-reservado" onchange="toggleReservado('f')" style="accent-color:#c2540a;width:16px;height:16px">
                 <i class="fas fa-lock"></i> Reservado - Réu Preso
             </label>
+            <div class="prioridade-row" id="f-prioridade-row">
+                <button type="button" class="prio-btn" data-key="idoso" onclick="togglePrioBtn(this)" title="Idoso"><i class="fas fa-person-cane"></i> Idoso</button>
+                <button type="button" class="prio-btn" data-key="hediondo" onclick="togglePrioBtn(this)" title="Hediondo"><i class="fas fa-skull-crossbones"></i> Hediondo</button>
+                <button type="button" class="prio-btn" data-key="violencia" onclick="togglePrioBtn(this)" title="Violência Doméstica"><i class="fas fa-house-chimney-crack"></i> Viol. Doméstica</button>
+                <button type="button" class="prio-btn" data-key="meta2" onclick="togglePrioBtn(this)" title="Meta 2+"><i class="fas fa-hourglass-half"></i> Meta 2+</button>
+            </div>
             <div class="form-grid">
                 <div class="form-group">
                     <label>Ano</label>
@@ -1074,6 +1092,8 @@ function toSupabaseRow(a) {
         reu_preso: !!a.reuPreso, reus_preso: a.reusPreso || [],
         projudi: !!a.projudi, intimacoes: !!a.intimacoes, termo: !!a.termo,
         reservado: !!a.reservado,
+        prio_idoso: !!a.prioIdoso, prio_hediondo: !!a.prioHediondo,
+        prio_violencia: !!a.prioViolencia, prio_meta2: !!a.prioMeta2,
         criado_em: a.criadoEm || null,
     };
 }
@@ -1085,6 +1105,8 @@ function fromSupabaseRow(r) {
         reuPreso: r.reu_preso, reusPreso: r.reus_preso || [],
         projudi: r.projudi, intimacoes: r.intimacoes, termo: r.termo,
         reservado: !!r.reservado,
+        prioIdoso: !!r.prio_idoso, prioHediondo: !!r.prio_hediondo,
+        prioViolencia: !!r.prio_violencia, prioMeta2: !!r.prio_meta2,
         criadoEm: r.criado_em,
     };
 }
@@ -1390,11 +1412,17 @@ function renderTable(filtered) {
         const statusCell = slot ? '—' : `
             <span class="status-badge ${statusClass(a.status)}">${a.status||'Pendente'}</span>
             ${alertaStat ? '<span class="alerta-icon alerta-status" title="Pendente há mais de 5 dias!">!</span>' : ''}`;
+        const prioBadges = [
+            a.prioIdoso     ? '<i class="fas fa-person-cane" title="Idoso"></i>' : '',
+            a.prioHediondo  ? '<i class="fas fa-skull-crossbones" title="Hediondo"></i>' : '',
+            a.prioViolencia ? '<i class="fas fa-house-chimney-crack" title="Violência Doméstica"></i>' : '',
+            a.prioMeta2     ? '<i class="fas fa-hourglass-half" title="Meta 2+"></i>' : '',
+        ].filter(Boolean).join('');
         return `
         <tr class="${a.reservado?'reservado-row':(a.reuPreso?'preso-row':'')} ${slot?'slot-row':''} ${al.length?'has-alert':''}" onclick="openModal(${a.id})" style="cursor:pointer">
             <td class="data">${fmtData(a.data)}${showAno?`<br><small style="color:var(--muted)">${a.ano||2026}</small>`:''}</td>
             <td class="hora">${a.hora||'--:--'}</td>
-            <td class="reu">${a.reservado ? '<span class="reu-nome" style="color:#c2540a;font-weight:700"><i class="fas fa-lock"></i> RESERVADO REU PRESO</span>' : (slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu ? a.reu.split(' / ').map((n, i) => { const preso = a.reusPreso ? a.reusPreso[i] : (a.reuPreso && i===0); return `<span class="reu-nome" ${preso?'style="color:var(--red)"':''}>${preso ? '<span class="badge-preso" style="flex-shrink:0"><i class="fas fa-handcuffs"></i></span> ' : ''}${n}</span>`; }).join('') : '—'))}</td>
+            <td class="reu">${a.reservado ? '<span class="reu-nome" style="color:#c2540a;font-weight:700"><i class="fas fa-lock"></i> RESERVADO REU PRESO</span>' : (slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu ? a.reu.split(' / ').map((n, i) => { const preso = a.reusPreso ? a.reusPreso[i] : (a.reuPreso && i===0); return `<span class="reu-nome" ${preso?'style="color:var(--red)"':''}>${preso ? '<span class="badge-preso" style="flex-shrink:0"><i class="fas fa-handcuffs"></i></span> ' : ''}${n}</span>`; }).join('') : '—'))}${prioBadges ? `<span class="prio-badges">${prioBadges}</span>` : ''}</td>
             <td class="processo">${a.processo||'<span style="color:#cbd5e0;font-style:italic">— aguardando —</span>'}</td>
             <td class="magistrado">${a.magistrado||'—'}</td>
             <td class="promotor" style="font-size:0.8rem;color:var(--muted)">${a.promotor||'—'}</td>
@@ -1696,6 +1724,7 @@ function openPreencher(id) {
     reus.forEach((r, i) => adicionarLinhaReu(r, reusPreso[i]));
     document.getElementById('p-reservado').checked = !!a.reservado;
     setReservadoLock('p', !!a.reservado);
+    setPrioridades('p', a);
     document.getElementById('btn-editar-completo').onclick = () => { closePreencher(); openModal(id, true); };
     document.getElementById('preencher-modal').classList.add('open');
     document.getElementById('p-processo').focus();
@@ -1738,6 +1767,7 @@ function salvarPreencher() {
     a.reusPreso = reusPreso;
     a.reuPreso = reusPreso.some(Boolean);
     a.reservado = document.getElementById('p-reservado').checked;
+    Object.assign(a, getPrioridades('p'));
     saveData([a]);
     closePreencher();
     render();
@@ -1768,6 +1798,30 @@ function toggleReservado(prefix) {
         else adicionarLinhaReuEdit('', false);
     }
     setReservadoLock(prefix, checked);
+}
+
+// ─── PRIORIDADES ─────────────────────────────────────────────────────────────
+
+const PRIORIDADE_MAP = { idoso: 'prioIdoso', hediondo: 'prioHediondo', violencia: 'prioViolencia', meta2: 'prioMeta2' };
+
+function togglePrioBtn(btn) {
+    btn.classList.toggle('active');
+}
+
+function getPrioridades(prefix) {
+    const row = document.getElementById(prefix + '-prioridade-row');
+    const result = {};
+    Object.entries(PRIORIDADE_MAP).forEach(([key, field]) => {
+        result[field] = row.querySelector(`[data-key="${key}"]`).classList.contains('active');
+    });
+    return result;
+}
+
+function setPrioridades(prefix, a) {
+    const row = document.getElementById(prefix + '-prioridade-row');
+    Object.entries(PRIORIDADE_MAP).forEach(([key, field]) => {
+        row.querySelector(`[data-key="${key}"]`).classList.toggle('active', !!a[field]);
+    });
 }
 
 document.getElementById('preencher-modal').addEventListener('click', e => { if (e.target===e.currentTarget) closePreencher(); });
@@ -1820,6 +1874,7 @@ function openModal(id, force) {
     (a.reu ? a.reu.split(' / ') : ['']).forEach((r, i) => adicionarLinhaReuEdit(r, reusPreso[i]||false));
     document.getElementById('f-reservado').checked = !!a.reservado;
     setReservadoLock('f', !!a.reservado);
+    setPrioridades('f', a);
     document.getElementById('f-status').value    = a.status;
     document.getElementById('f-pendencias').value = a.pendencias;
     document.getElementById('f-observacoes').value = a.observacoes;
@@ -1860,6 +1915,7 @@ function saveAudiencia() {
         intimacoes: document.getElementById('f-intimacoes').checked,
         termo: document.getElementById('f-termo').checked,
         reservado: document.getElementById('f-reservado').checked,
+        ...getPrioridades('f'),
     };
     const idx = audiencias.findIndex(a => a.id === id);
     if (idx >= 0) audiencias[idx] = obj;

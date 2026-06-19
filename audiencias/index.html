@@ -524,6 +524,7 @@
             <option value="Cancelada">Cancelada</option>
             <option value="Pendente">Pendente (sem status)</option>
             <option value="SemData">⏰ Sem data/hora</option>
+            <option value="Reservado">🔒 Reservado - Réu Preso</option>
         </select>
         <select id="filter-magistrado">
             <option value="">Todos os magistrados</option>
@@ -1248,6 +1249,7 @@ function getFiltered() {
         // dropdown filters
         if (filterStatus) {
             if (filterStatus === 'SemData') { if (a.data) return false; }
+            else if (filterStatus === 'Reservado') { if (!a.reservado) return false; }
             else if (filterStatus === 'Pendente' && a.status) return false;
             else if (filterStatus !== 'Pendente' && a.status !== filterStatus) return false;
         }

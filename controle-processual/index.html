@@ -84,6 +84,8 @@
         .dias-atencao { color: var(--yellow); }
         .dias-urgente { color: var(--red); }
         .pendencia-preview { color: var(--muted); font-size: 0.8rem; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .apn-table th { text-align: center; }
+        .apn-table td.center { text-align: center; }
         .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
         .empty-state i { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
 
@@ -262,15 +264,23 @@
         <div class="stat-card urgente" onclick="filterApn('urgente')"><div class="stat-label">Tramitação &gt; 365 dias</div><div class="stat-value" id="ap-urgente">0</div><div class="stat-hint">clique para filtrar</div></div>
         <div class="stat-card atencao" onclick="filterApn('atencao')"><div class="stat-label">Sem sentença</div><div class="stat-value" id="ap-sem-sentenca">0</div><div class="stat-hint">clique para filtrar</div></div>
         <div class="stat-card" onclick="filterApn('julgados')"><div class="stat-label">Julgados</div><div class="stat-value" id="ap-julgados">0</div><div class="stat-hint">clique para filtrar</div></div>
+        <div class="stat-card atencao" onclick="filterApn('parado')"><div class="stat-label">Sem movimentação 15+ dias</div><div class="stat-value" id="ap-parado">0</div><div class="stat-hint">clique para filtrar</div></div>
     </div>
     <div class="toolbar">
         <div class="search-box"><i class="fas fa-search"></i><input type="text" id="ap-search" placeholder="Buscar por processo, fase, promotoria..."></div>
-        <select id="ap-filter-fase"><option value="">Todas as fases</option></select>
+        <select id="ap-filter-fase">
+            <option value="">Todas as fases</option>
+            <option value="Citação">Citação</option>
+            <option value="Defesa prévia">Defesa prévia</option>
+            <option value="Instrução">Instrução</option>
+            <option value="Diligências">Diligências</option>
+        </select>
         <select id="ap-filter-julgado">
             <option value="">Julgado e não julgado</option>
             <option value="sim">Julgado</option>
             <option value="nao">Não julgado</option>
         </select>
+        <button class="filter-btn" id="ap-arquivado-btn" onclick="toggleArquivadoFilter()"><i class="fas fa-box-archive"></i> Suspensos/Arquivados</button>
         <button class="btn-new" onclick="openModalApn()"><i class="fas fa-plus"></i> Novo Processo</button>
     </div>
     <div class="table-wrapper">
@@ -279,16 +289,19 @@
             <span style="font-size:0.75rem;color:#aaa">Clique em uma linha para editar</span>
         </div>
         <div style="overflow-x:auto">
-        <table>
+        <table class="apn-table">
             <thead>
                 <tr>
-                    <th onclick="sortApn('tramitacao')">Tramitação <span id="sort-ap-tramitacao"></span></th>
+                    <th class="no-sort">Alerta</th>
+                    <th onclick="sortApn('tramitacao')">Tempo de tramitação <span id="sort-ap-tramitacao"></span></th>
                     <th onclick="sortApn('processo')">Processo <span id="sort-ap-processo"></span></th>
+                    <th class="no-sort">Status</th>
                     <th onclick="sortApn('data_distribuicao')">Distribuição <span id="sort-ap-data_distribuicao"></span></th>
-                    <th class="no-sort">Denúncia</th>
+                    <th class="no-sort">Recebimento de Denúncia</th>
                     <th class="no-sort">1ª Sentença</th>
                     <th class="no-sort">Julgado</th>
-                    <th onclick="sortApn('fase_processual')">Fase <span id="sort-ap-fase_processual"></span></th>
+                    <th onclick="sortApn('fase_processual')">Fase Processual <span id="sort-ap-fase_processual"></span></th>
+                    <th class="no-sort">Fila Processual</th>
                     <th class="no-sort">MP</th>
                     <th class="no-sort">DPE/Adv</th>
                     <th class="no-sort">Pendências</th>
@@ -440,11 +453,25 @@
                     <input type="date" id="ap-denuncia">
                 </div>
                 <div class="form-group">
-                    <label>Fase Processual</label>
-                    <input type="text" id="ap-fase" placeholder="Citação, Resposta à Acusação, Instrução...">
+                    <label>Status</label>
+                    <select id="ap-status">
+                        <option value="Ativo">Ativo</option>
+                        <option value="Suspenso">Suspenso</option>
+                        <option value="Arquivado">Arquivado</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label>Localização</label>
+                    <label>Fase Processual</label>
+                    <select id="ap-fase">
+                        <option value="">Selecione...</option>
+                        <option value="Citação">Citação</option>
+                        <option value="Defesa prévia">Defesa prévia</option>
+                        <option value="Instrução">Instrução</option>
+                        <option value="Diligências">Diligências</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Fila Processual</label>
                     <input type="text" id="ap-localizacao">
                 </div>
                 <div class="form-group">
@@ -507,6 +534,7 @@ let piCardFilter = 'todos';
 let cpCardFilter = 'todos';
 let apCardFilter = 'todos';
 let cpOnlyPrioridade = false;
+let apOnlyArquivado = false;
 
 // ─── AUTH ──────────────────────────────────────────────────────────────────
 function showAuthError(msg) {
@@ -604,6 +632,7 @@ function apnToRow(p) {
         denuncia: p.denuncia || null, primeira_sentenca: !!p.primeiraSentenca,
         julgado: !!p.julgado, fase_processual: p.faseProcessual, localizacao: p.localizacao,
         mp_origem: p.mpOrigem, defesa: p.defesa, pendencias: p.pendencias,
+        status: p.status || 'Ativo', updated_at: new Date().toISOString(),
     };
 }
 function rowToApn(r) {
@@ -612,6 +641,7 @@ function rowToApn(r) {
         denuncia: r.denuncia, primeiraSentenca: r.primeira_sentenca, julgado: r.julgado,
         faseProcessual: r.fase_processual, localizacao: r.localizacao, mpOrigem: r.mp_origem,
         defesa: r.defesa, pendencias: r.pendencias,
+        status: r.status || 'Ativo', updatedAt: r.updated_at,
     };
 }
 
@@ -1019,18 +1049,13 @@ async function deleteCarta() {
 
 // ═══════════════════════════ TEMPO DE APN ═══════════════════════════
 
-function getFasesUnicasApn() {
-    return [...new Set(apns.map(p => p.faseProcessual).filter(Boolean))].sort();
-}
-function buildFaseFilterApn() {
-    const sel = document.getElementById('ap-filter-fase');
-    const current = sel.value;
-    sel.innerHTML = '<option value="">Todas as fases</option>' +
-        getFasesUnicasApn().map(f => `<option value="${f}">${f}</option>`).join('');
-    sel.value = current;
-}
 function filterApn(card) {
     apCardFilter = apCardFilter === card ? 'todos' : card;
+    renderApn();
+}
+function toggleArquivadoFilter() {
+    apOnlyArquivado = !apOnlyArquivado;
+    document.getElementById('ap-arquivado-btn').classList.toggle('active', apOnlyArquivado);
     renderApn();
 }
 function sortApn(field) {
@@ -1042,7 +1067,7 @@ function getFilteredApn() {
     const term = (document.getElementById('ap-search').value || '').toLowerCase();
     const fase = document.getElementById('ap-filter-fase').value;
     const julgadoF = document.getElementById('ap-filter-julgado').value;
-    let list = apns.map(p => ({ ...p, _dias: diasDesde(p.dataDistribuicao) }));
+    let list = apns.map(p => ({ ...p, _dias: diasDesde(p.dataDistribuicao), _diasMov: diasDesde((p.updatedAt || '').slice(0, 10)) }));
     if (term) {
         list = list.filter(p =>
             (p.processo || '').toLowerCase().includes(term) ||
@@ -1055,9 +1080,11 @@ function getFilteredApn() {
     if (fase) list = list.filter(p => p.faseProcessual === fase);
     if (julgadoF === 'sim') list = list.filter(p => p.julgado);
     if (julgadoF === 'nao') list = list.filter(p => !p.julgado);
+    if (apOnlyArquivado) list = list.filter(p => p.status === 'Suspenso' || p.status === 'Arquivado');
     if (apCardFilter === 'urgente') list = list.filter(p => p._dias != null && p._dias > 365);
     if (apCardFilter === 'atencao') list = list.filter(p => !p.primeiraSentenca);
     if (apCardFilter === 'julgados') list = list.filter(p => p.julgado);
+    if (apCardFilter === 'parado') list = list.filter(p => p._diasMov != null && p._diasMov >= 15);
     list.sort((a, b) => {
         let va, vb;
         if (apSort.field === 'tramitacao') { va = a._dias ?? -1; vb = b._dias ?? -1; }
@@ -1069,12 +1096,15 @@ function getFilteredApn() {
     return list;
 }
 function renderApn() {
-    buildFaseFilterApn();
     const list = getFilteredApn();
     document.getElementById('ap-total').textContent = apns.length;
     document.getElementById('ap-urgente').textContent = apns.filter(p => (diasDesde(p.dataDistribuicao) || 0) > 365).length;
     document.getElementById('ap-sem-sentenca').textContent = apns.filter(p => !p.primeiraSentenca).length;
     document.getElementById('ap-julgados').textContent = apns.filter(p => p.julgado).length;
+    document.getElementById('ap-parado').textContent = apns.filter(p => {
+        const d = diasDesde((p.updatedAt || '').slice(0, 10));
+        return d != null && d >= 15;
+    }).length;
     document.getElementById('ap-count').textContent = `${list.length} de ${apns.length} processo(s)`;
     ['tramitacao', 'processo', 'data_distribuicao', 'fase_processual'].forEach(f => {
         const el = document.getElementById('sort-ap-' + f);
@@ -1082,23 +1112,32 @@ function renderApn() {
     });
     const tbody = document.getElementById('ap-table-body');
     if (!list.length) {
-        tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fas fa-folder-open"></i><div>Nenhum processo encontrado</div></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="13"><div class="empty-state"><i class="fas fa-folder-open"></i><div>Nenhum processo encontrado</div></div></td></tr>`;
         return;
     }
-    tbody.innerHTML = list.map(p => `
+    tbody.innerHTML = list.map(p => {
+        const ok = p.status === 'Suspenso' || p.status === 'Arquivado';
+        const stale = p._diasMov != null && p._diasMov >= 15;
+        return `
         <tr onclick="openModalApn(${p.id})">
-            <td><span class="dias-pill ${diasClass(p._dias, 180, 365)}">${p._dias != null ? p._dias + ' dias' : '—'}</span></td>
-            <td class="proc-num">${p.processo}</td>
-            <td>${fmtData(p.dataDistribuicao)}</td>
-            <td>${fmtData(p.denuncia)}</td>
-            <td><span class="badge ${p.primeiraSentenca ? 'badge-sim' : 'badge-nao'}">${p.primeiraSentenca ? 'Sim' : 'Não'}</span></td>
-            <td><span class="badge ${p.julgado ? 'badge-sim' : 'badge-nao'}">${p.julgado ? 'Sim' : 'Não'}</span></td>
+            <td class="center">${ok
+                ? '<span class="badge badge-sim"><i class="fas fa-check"></i> OK</span>'
+                : '<span class="badge badge-nao"><i class="fas fa-exclamation"></i> Pendente</span>'}</td>
+            <td class="center"><span class="dias-pill ${diasClass(p._dias, 180, 365)}">${p._dias != null ? p._dias + ' dias' : '—'}</span></td>
+            <td class="proc-num">${p.processo}${stale ? ` <i class="fas fa-triangle-exclamation" style="color:var(--red)" title="Sem movimentação há ${p._diasMov} dias"></i>` : ''}</td>
+            <td class="center">${p.status || 'Ativo'}</td>
+            <td class="center">${fmtData(p.dataDistribuicao)}</td>
+            <td class="center">${fmtData(p.denuncia)}</td>
+            <td class="center"><span class="badge ${p.primeiraSentenca ? 'badge-sim' : 'badge-nao'}">${p.primeiraSentenca ? 'Sim' : 'Não'}</span></td>
+            <td class="center"><span class="badge ${p.julgado ? 'badge-sim' : 'badge-nao'}">${p.julgado ? 'Sim' : 'Não'}</span></td>
             <td>${p.faseProcessual || '—'}</td>
+            <td>${p.localizacao || '—'}</td>
             <td>${p.mpOrigem || '—'}</td>
             <td>${p.defesa || '—'}</td>
             <td class="pendencia-preview" title="${(p.pendencias || '').replace(/"/g, '&quot;')}">${p.pendencias || '—'}</td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
 }
 document.addEventListener('input', e => { if (e.target.id === 'ap-search') renderApn(); });
 document.addEventListener('change', e => { if (e.target.id === 'ap-filter-fase' || e.target.id === 'ap-filter-julgado') renderApn(); });
@@ -1109,6 +1148,7 @@ function openModalApn(id) {
     document.getElementById('ap-processo').value = p ? p.processo : '';
     document.getElementById('ap-data-distribuicao').value = p ? (p.dataDistribuicao || '') : '';
     document.getElementById('ap-denuncia').value = p ? (p.denuncia || '') : '';
+    document.getElementById('ap-status').value = p ? (p.status || 'Ativo') : 'Ativo';
     document.getElementById('ap-fase').value = p ? (p.faseProcessual || '') : '';
     document.getElementById('ap-localizacao').value = p ? (p.localizacao || '') : '';
     document.getElementById('ap-mp').value = p ? (p.mpOrigem || '') : '';
@@ -1130,13 +1170,15 @@ async function saveApn() {
         id, processo,
         dataDistribuicao: document.getElementById('ap-data-distribuicao').value || null,
         denuncia: document.getElementById('ap-denuncia').value || null,
-        faseProcessual: document.getElementById('ap-fase').value.trim(),
+        status: document.getElementById('ap-status').value,
+        faseProcessual: document.getElementById('ap-fase').value,
         localizacao: document.getElementById('ap-localizacao').value.trim(),
         mpOrigem: document.getElementById('ap-mp').value.trim(),
         defesa: document.getElementById('ap-defesa').value.trim(),
         primeiraSentenca: document.getElementById('ap-sentenca').checked,
         julgado: document.getElementById('ap-julgado').checked,
         pendencias: document.getElementById('ap-pendencias').value.trim(),
+        updatedAt: new Date().toISOString(),
     };
     const idx = apns.findIndex(x => x.id === id);
     if (idx >= 0) apns[idx] = p; else apns.push(p);

@@ -3,9 +3,13 @@
 
 drop policy if exists "public access" on processos_idosos;
 drop policy if exists "public access" on cartas_precatorias;
+drop policy if exists "public access" on tempo_apn;
 
 create policy "authenticated access" on processos_idosos
   for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 
 create policy "authenticated access" on cartas_precatorias
+  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+create policy "authenticated access" on tempo_apn
   for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');

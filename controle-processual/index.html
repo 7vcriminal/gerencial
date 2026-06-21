@@ -455,33 +455,30 @@
                 </div>
                 <div class="form-group">
                     <label>Status</label>
-                    <select id="ap-status">
-                        <option value="Ativo">Ativo</option>
-                        <option value="Suspenso">Suspenso</option>
-                        <option value="Arquivado">Arquivado</option>
-                    </select>
+                    <select id="ap-status" onchange="handleApnNovaOpcao(this, loadApnStatus, saveApnStatus, 'status')"></select>
                 </div>
                 <div class="form-group">
                     <label>Fase Processual</label>
-                    <select id="ap-fase">
-                        <option value="">Selecione...</option>
-                        <option value="Citação">Citação</option>
-                        <option value="Defesa prévia">Defesa prévia</option>
-                        <option value="Instrução">Instrução</option>
-                        <option value="Diligências">Diligências</option>
-                    </select>
+                    <select id="ap-fase" onchange="handleApnNovaOpcao(this, loadApnFases, saveApnFases, 'fase processual')"></select>
                 </div>
                 <div class="form-group">
                     <label>Fila Processual</label>
                     <select id="ap-localizacao" onchange="handleApnNovaOpcao(this, loadApnFilas, saveApnFilas, 'fila processual')"></select>
                 </div>
                 <div class="form-group">
-                    <label>MP / Vara de Origem</label>
-                    <input type="text" id="ap-mp">
+                    <label>Promotoria</label>
+                    <select id="ap-mp">
+                        <option value="">Selecione...</option>
+                        <option value="04ª PJ">04ª PJ</option>
+                        <option value="92ª PJ">92ª PJ</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label>DPE / Advogado</label>
-                    <select id="ap-defesa" onchange="handleApnNovaOpcao(this, loadApnDefesas, saveApnDefesas, 'DPE/Advogado')"></select>
+                    <label>Defesa</label>
+                    <div class="form-checks">
+                        <label class="form-check"><input type="checkbox" id="ap-defesa-dpe"> DPE</label>
+                        <label class="form-check"><input type="checkbox" id="ap-defesa-adv"> ADV</label>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Situação</label>
@@ -537,7 +534,10 @@ let apCardFilter = 'todos';
 let cpOnlyPrioridade = false;
 let apFilterAlerta = false;
 const STORAGE_APN_FILAS = 'controleProcessual_apn_filas_v1';
-const STORAGE_APN_DEFESAS = 'controleProcessual_apn_defesas_v1';
+const STORAGE_APN_STATUS = 'controleProcessual_apn_status_v1';
+const STORAGE_APN_FASES = 'controleProcessual_apn_fases_v1';
+const DEFAULT_APN_STATUS = ['Ativo', 'Suspenso', 'Arquivado'];
+const DEFAULT_APN_FASES = ['Citação', 'Defesa prévia', 'Instrução', 'Diligências'];
 
 // ─── MÁSCARA CNJ (0000000-00.0000.0.00.0000) ───────────────────────────────
 function formatProcessoCNJ(value) {
@@ -1190,13 +1190,21 @@ function loadApnFilas() {
 function saveApnFilas(list) {
     localStorage.setItem(STORAGE_APN_FILAS, JSON.stringify(list));
 }
-function loadApnDefesas() {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_APN_DEFESAS) || '[]');
-    const fromData = apns.map(p => p.defesa).filter(Boolean);
-    return [...new Set([...stored, ...fromData])].sort((a, b) => a.localeCompare(b));
+function loadApnStatus() {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_APN_STATUS) || '[]');
+    const fromData = apns.map(p => p.status).filter(Boolean);
+    return [...new Set([...DEFAULT_APN_STATUS, ...stored, ...fromData])];
 }
-function saveApnDefesas(list) {
-    localStorage.setItem(STORAGE_APN_DEFESAS, JSON.stringify(list));
+function saveApnStatus(list) {
+    localStorage.setItem(STORAGE_APN_STATUS, JSON.stringify(list));
+}
+function loadApnFases() {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_APN_FASES) || '[]');
+    const fromData = apns.map(p => p.faseProcessual).filter(Boolean);
+    return [...new Set([...DEFAULT_APN_FASES, ...stored, ...fromData])];
+}
+function saveApnFases(list) {
+    localStorage.setItem(STORAGE_APN_FASES, JSON.stringify(list));
 }
 function buildApnSelect(selectEl, options, currentValue) {
     const all = currentValue && !options.includes(currentValue) ? [...options, currentValue] : options;
@@ -1219,11 +1227,13 @@ function openModalApn(id) {
     document.getElementById('ap-processo').value = p ? p.processo : '';
     document.getElementById('ap-data-distribuicao').value = p ? (p.dataDistribuicao || '') : '';
     document.getElementById('ap-denuncia').value = p ? (p.denuncia || '') : '';
-    document.getElementById('ap-status').value = p ? (p.status || 'Ativo') : 'Ativo';
-    document.getElementById('ap-fase').value = p ? (p.faseProcessual || '') : '';
+    buildApnSelect(document.getElementById('ap-status'), loadApnStatus(), p ? (p.status || 'Ativo') : 'Ativo');
+    buildApnSelect(document.getElementById('ap-fase'), loadApnFases(), p ? (p.faseProcessual || '') : '');
     buildApnSelect(document.getElementById('ap-localizacao'), loadApnFilas(), p ? (p.localizacao || '') : '');
     document.getElementById('ap-mp').value = p ? (p.mpOrigem || '') : '';
-    buildApnSelect(document.getElementById('ap-defesa'), loadApnDefesas(), p ? (p.defesa || '') : '');
+    const defesaVal = p ? (p.defesa || '') : '';
+    document.getElementById('ap-defesa-dpe').checked = defesaVal.includes('DPE');
+    document.getElementById('ap-defesa-adv').checked = defesaVal.includes('ADV');
     document.getElementById('ap-sentenca').checked = p ? !!p.primeiraSentenca : false;
     document.getElementById('ap-julgado').checked = p ? !!p.julgado : false;
     document.getElementById('ap-pendencias').value = p ? (p.pendencias || '') : '';
@@ -1248,6 +1258,9 @@ async function saveApn() {
     } else {
         tramitacaoCongelada = null;
     }
+    const defesaParts = [];
+    if (document.getElementById('ap-defesa-dpe').checked) defesaParts.push('DPE');
+    if (document.getElementById('ap-defesa-adv').checked) defesaParts.push('ADV');
     const p = {
         id, processo,
         dataDistribuicao,
@@ -1256,15 +1269,16 @@ async function saveApn() {
         tramitacaoCongelada,
         faseProcessual: document.getElementById('ap-fase').value,
         localizacao: document.getElementById('ap-localizacao').value.trim(),
-        mpOrigem: document.getElementById('ap-mp').value.trim(),
-        defesa: document.getElementById('ap-defesa').value.trim(),
+        mpOrigem: document.getElementById('ap-mp').value,
+        defesa: defesaParts.join(', '),
         primeiraSentenca: document.getElementById('ap-sentenca').checked,
         julgado: document.getElementById('ap-julgado').checked,
         pendencias: document.getElementById('ap-pendencias').value.trim(),
         updatedAt: new Date().toISOString(),
     };
     if (p.localizacao) { const filas = loadApnFilas(); if (!filas.includes(p.localizacao)) { filas.push(p.localizacao); saveApnFilas(filas); } }
-    if (p.defesa) { const defesas = loadApnDefesas(); if (!defesas.includes(p.defesa)) { defesas.push(p.defesa); saveApnDefesas(defesas); } }
+    if (status) { const statuses = loadApnStatus(); if (!statuses.includes(status)) { statuses.push(status); saveApnStatus(statuses); } }
+    if (p.faseProcessual) { const fases = loadApnFases(); if (!fases.includes(p.faseProcessual)) { fases.push(p.faseProcessual); saveApnFases(fases); } }
     const idx = apns.findIndex(x => x.id === id);
     if (idx >= 0) apns[idx] = p; else apns.push(p);
     closeModalApn();

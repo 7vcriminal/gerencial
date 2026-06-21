@@ -84,8 +84,12 @@
         .dias-atencao { color: var(--yellow); }
         .dias-urgente { color: var(--red); }
         .pendencia-preview { color: var(--muted); font-size: 0.8rem; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .apn-table th { text-align: center; }
+        .apn-table { table-layout: fixed; }
+        .apn-table th { text-align: center; white-space: normal; word-break: break-word; }
         .apn-table td.center { text-align: center; }
+        .apn-table td { word-break: break-word; }
+        .apn-table .proc-num { font-family: inherit; font-weight: 400; font-size: inherit; }
+        .alerta-banner { display: none; border-radius: var(--radius); padding: 0.75rem 1.25rem; margin-bottom: 1rem; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 0.6rem; flex-wrap: wrap; cursor: pointer; transition: var(--transition); }
         .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
         .empty-state i { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
 
@@ -264,8 +268,8 @@
         <div class="stat-card urgente" onclick="filterApn('urgente')"><div class="stat-label">Tramitação &gt; 365 dias</div><div class="stat-value" id="ap-urgente">0</div><div class="stat-hint">clique para filtrar</div></div>
         <div class="stat-card atencao" onclick="filterApn('atencao')"><div class="stat-label">Sem sentença</div><div class="stat-value" id="ap-sem-sentenca">0</div><div class="stat-hint">clique para filtrar</div></div>
         <div class="stat-card" onclick="filterApn('julgados')"><div class="stat-label">Julgados</div><div class="stat-value" id="ap-julgados">0</div><div class="stat-hint">clique para filtrar</div></div>
-        <div class="stat-card atencao" onclick="filterApn('parado')"><div class="stat-label">Sem movimentação 15+ dias</div><div class="stat-value" id="ap-parado">0</div><div class="stat-hint">clique para filtrar</div></div>
     </div>
+    <div class="alerta-banner" id="ap-alerta-banner" onclick="toggleAlertaApn()" title="Clique para filtrar apenas processos sem movimentação"></div>
     <div class="toolbar">
         <div class="search-box"><i class="fas fa-search"></i><input type="text" id="ap-search" placeholder="Buscar por processo, fase, promotoria..."></div>
         <select id="ap-filter-fase">
@@ -290,6 +294,19 @@
         </div>
         <div style="overflow-x:auto">
         <table class="apn-table">
+            <colgroup>
+                <col style="width:64px">
+                <col style="width:110px">
+                <col style="width:170px">
+                <col style="width:96px">
+                <col style="width:96px">
+                <col style="width:110px">
+                <col style="width:88px">
+                <col style="width:88px">
+                <col style="width:130px">
+                <col style="width:130px">
+                <col>
+            </colgroup>
             <thead>
                 <tr>
                     <th class="no-sort">Alerta</th>
@@ -302,8 +319,6 @@
                     <th class="no-sort">Julgado</th>
                     <th onclick="sortApn('fase_processual')">Fase Processual <span id="sort-ap-fase_processual"></span></th>
                     <th class="no-sort">Fila Processual</th>
-                    <th class="no-sort">MP</th>
-                    <th class="no-sort">DPE/Adv</th>
                     <th class="no-sort">Pendências</th>
                 </tr>
             </thead>
@@ -535,6 +550,7 @@ let cpCardFilter = 'todos';
 let apCardFilter = 'todos';
 let cpOnlyPrioridade = false;
 let apOnlyArquivado = false;
+let apFilterAlerta = false;
 
 // ─── AUTH ──────────────────────────────────────────────────────────────────
 function showAuthError(msg) {
@@ -633,6 +649,7 @@ function apnToRow(p) {
         julgado: !!p.julgado, fase_processual: p.faseProcessual, localizacao: p.localizacao,
         mp_origem: p.mpOrigem, defesa: p.defesa, pendencias: p.pendencias,
         status: p.status || 'Ativo', updated_at: new Date().toISOString(),
+        tramitacao_congelada: p.tramitacaoCongelada ?? null,
     };
 }
 function rowToApn(r) {
@@ -642,6 +659,7 @@ function rowToApn(r) {
         faseProcessual: r.fase_processual, localizacao: r.localizacao, mpOrigem: r.mp_origem,
         defesa: r.defesa, pendencias: r.pendencias,
         status: r.status || 'Ativo', updatedAt: r.updated_at,
+        tramitacaoCongelada: r.tramitacao_congelada ?? null,
     };
 }
 
@@ -1058,16 +1076,25 @@ function toggleArquivadoFilter() {
     document.getElementById('ap-arquivado-btn').classList.toggle('active', apOnlyArquivado);
     renderApn();
 }
+function toggleAlertaApn() {
+    apFilterAlerta = !apFilterAlerta;
+    renderApn();
+}
 function sortApn(field) {
     if (apSort.field === field) apSort.dir = apSort.dir === 'asc' ? 'desc' : 'asc';
     else { apSort.field = field; apSort.dir = 'desc'; }
     renderApn();
 }
+function tramitacaoApn(p) {
+    return (p.status === 'Suspenso' || p.status === 'Arquivado') && p.tramitacaoCongelada != null
+        ? p.tramitacaoCongelada
+        : diasDesde(p.dataDistribuicao);
+}
 function getFilteredApn() {
     const term = (document.getElementById('ap-search').value || '').toLowerCase();
     const fase = document.getElementById('ap-filter-fase').value;
     const julgadoF = document.getElementById('ap-filter-julgado').value;
-    let list = apns.map(p => ({ ...p, _dias: diasDesde(p.dataDistribuicao), _diasMov: diasDesde((p.updatedAt || '').slice(0, 10)) }));
+    let list = apns.map(p => ({ ...p, _dias: tramitacaoApn(p), _diasMov: diasDesde((p.updatedAt || '').slice(0, 10)) }));
     if (term) {
         list = list.filter(p =>
             (p.processo || '').toLowerCase().includes(term) ||
@@ -1081,10 +1108,10 @@ function getFilteredApn() {
     if (julgadoF === 'sim') list = list.filter(p => p.julgado);
     if (julgadoF === 'nao') list = list.filter(p => !p.julgado);
     if (apOnlyArquivado) list = list.filter(p => p.status === 'Suspenso' || p.status === 'Arquivado');
+    if (apFilterAlerta) list = list.filter(p => p._diasMov != null && p._diasMov >= 15);
     if (apCardFilter === 'urgente') list = list.filter(p => p._dias != null && p._dias > 365);
     if (apCardFilter === 'atencao') list = list.filter(p => !p.primeiraSentenca);
     if (apCardFilter === 'julgados') list = list.filter(p => p.julgado);
-    if (apCardFilter === 'parado') list = list.filter(p => p._diasMov != null && p._diasMov >= 15);
     list.sort((a, b) => {
         let va, vb;
         if (apSort.field === 'tramitacao') { va = a._dias ?? -1; vb = b._dias ?? -1; }
@@ -1095,16 +1122,31 @@ function getFilteredApn() {
     });
     return list;
 }
-function renderApn() {
-    const list = getFilteredApn();
-    document.getElementById('ap-total').textContent = apns.length;
-    document.getElementById('ap-urgente').textContent = apns.filter(p => (diasDesde(p.dataDistribuicao) || 0) > 365).length;
-    document.getElementById('ap-sem-sentenca').textContent = apns.filter(p => !p.primeiraSentenca).length;
-    document.getElementById('ap-julgados').textContent = apns.filter(p => p.julgado).length;
-    document.getElementById('ap-parado').textContent = apns.filter(p => {
+function renderAlertaApn() {
+    const banner = document.getElementById('ap-alerta-banner');
+    const total = apns.filter(p => {
         const d = diasDesde((p.updatedAt || '').slice(0, 10));
         return d != null && d >= 15;
     }).length;
+    if (total > 0) {
+        banner.style.display = 'flex';
+        banner.style.background = apFilterAlerta ? '#b91c1c' : '#fef2f2';
+        banner.style.border = `1px solid ${apFilterAlerta ? '#7f1d1d' : '#fecaca'}`;
+        banner.style.color = apFilterAlerta ? '#fff' : '#b91c1c';
+        const filterLabel = apFilterAlerta ? ' — <span style="text-decoration:underline">clique para mostrar todos</span>' : ' — <span style="text-decoration:underline">clique para filtrar</span>';
+        banner.innerHTML = `<i class="fas fa-triangle-exclamation"></i> <strong>${total} processo(s)</strong> sem movimentação há 15 dias ou mais${filterLabel}`;
+    } else {
+        banner.style.display = 'none';
+        if (apFilterAlerta) apFilterAlerta = false;
+    }
+}
+function renderApn() {
+    renderAlertaApn();
+    const list = getFilteredApn();
+    document.getElementById('ap-total').textContent = apns.length;
+    document.getElementById('ap-urgente').textContent = apns.filter(p => (tramitacaoApn(p) || 0) > 365).length;
+    document.getElementById('ap-sem-sentenca').textContent = apns.filter(p => !p.primeiraSentenca).length;
+    document.getElementById('ap-julgados').textContent = apns.filter(p => p.julgado).length;
     document.getElementById('ap-count').textContent = `${list.length} de ${apns.length} processo(s)`;
     ['tramitacao', 'processo', 'data_distribuicao', 'fase_processual'].forEach(f => {
         const el = document.getElementById('sort-ap-' + f);
@@ -1112,7 +1154,7 @@ function renderApn() {
     });
     const tbody = document.getElementById('ap-table-body');
     if (!list.length) {
-        tbody.innerHTML = `<tr><td colspan="13"><div class="empty-state"><i class="fas fa-folder-open"></i><div>Nenhum processo encontrado</div></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><i class="fas fa-folder-open"></i><div>Nenhum processo encontrado</div></div></td></tr>`;
         return;
     }
     tbody.innerHTML = list.map(p => {
@@ -1132,8 +1174,6 @@ function renderApn() {
             <td class="center"><span class="badge ${p.julgado ? 'badge-sim' : 'badge-nao'}">${p.julgado ? 'Sim' : 'Não'}</span></td>
             <td>${p.faseProcessual || '—'}</td>
             <td>${p.localizacao || '—'}</td>
-            <td>${p.mpOrigem || '—'}</td>
-            <td>${p.defesa || '—'}</td>
             <td class="pendencia-preview" title="${(p.pendencias || '').replace(/"/g, '&quot;')}">${p.pendencias || '—'}</td>
         </tr>
     `;
@@ -1166,11 +1206,23 @@ async function saveApn() {
     if (!processo) { showToast('Informe o número do processo', 'error'); return; }
     const idVal = document.getElementById('ap-id').value;
     const id = idVal ? Number(idVal) : nextApnId++;
+    const old = apns.find(x => x.id === id);
+    const status = document.getElementById('ap-status').value;
+    const dataDistribuicao = document.getElementById('ap-data-distribuicao').value || null;
+    let tramitacaoCongelada = old ? old.tramitacaoCongelada : null;
+    if (status === 'Suspenso' || status === 'Arquivado') {
+        if (!old || old.status === 'Ativo' || tramitacaoCongelada == null) {
+            tramitacaoCongelada = diasDesde(dataDistribuicao);
+        }
+    } else {
+        tramitacaoCongelada = null;
+    }
     const p = {
         id, processo,
-        dataDistribuicao: document.getElementById('ap-data-distribuicao').value || null,
+        dataDistribuicao,
         denuncia: document.getElementById('ap-denuncia').value || null,
-        status: document.getElementById('ap-status').value,
+        status,
+        tramitacaoCongelada,
         faseProcessual: document.getElementById('ap-fase').value,
         localizacao: document.getElementById('ap-localizacao').value.trim(),
         mpOrigem: document.getElementById('ap-mp').value.trim(),

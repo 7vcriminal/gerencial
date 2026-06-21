@@ -84,10 +84,9 @@
         .dias-atencao { color: var(--yellow); }
         .dias-urgente { color: var(--red); }
         .pendencia-preview { color: var(--muted); font-size: 0.8rem; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .apn-table { table-layout: fixed; }
-        .apn-table th { text-align: center; white-space: normal; word-break: break-word; }
+        .apn-table th { text-align: center; }
         .apn-table td.center { text-align: center; }
-        .apn-table td { word-break: break-word; }
+        .apn-table .badge { white-space: nowrap; }
         .apn-table .proc-num { font-family: inherit; font-weight: 400; font-size: inherit; }
         .alerta-banner { display: none; border-radius: var(--radius); padding: 0.75rem 1.25rem; margin-bottom: 1rem; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 0.6rem; flex-wrap: wrap; cursor: pointer; transition: var(--transition); }
         .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
@@ -268,6 +267,7 @@
         <div class="stat-card urgente" onclick="filterApn('urgente')"><div class="stat-label">Tramitação &gt; 365 dias</div><div class="stat-value" id="ap-urgente">0</div><div class="stat-hint">clique para filtrar</div></div>
         <div class="stat-card atencao" onclick="filterApn('atencao')"><div class="stat-label">Sem sentença</div><div class="stat-value" id="ap-sem-sentenca">0</div><div class="stat-hint">clique para filtrar</div></div>
         <div class="stat-card" onclick="filterApn('julgados')"><div class="stat-label">Julgados</div><div class="stat-value" id="ap-julgados">0</div><div class="stat-hint">clique para filtrar</div></div>
+        <div class="stat-card" onclick="filterApn('arquivados')"><div class="stat-label">Suspensos/Arquivados</div><div class="stat-value" id="ap-arquivados">0</div><div class="stat-hint">clique para filtrar</div></div>
     </div>
     <div class="alerta-banner" id="ap-alerta-banner" onclick="toggleAlertaApn()" title="Clique para filtrar apenas processos sem movimentação"></div>
     <div class="toolbar">
@@ -284,7 +284,6 @@
             <option value="sim">Julgado</option>
             <option value="nao">Não julgado</option>
         </select>
-        <button class="filter-btn" id="ap-arquivado-btn" onclick="toggleArquivadoFilter()"><i class="fas fa-box-archive"></i> Suspensos/Arquivados</button>
         <button class="btn-new" onclick="openModalApn()"><i class="fas fa-plus"></i> Novo Processo</button>
     </div>
     <div class="table-wrapper">
@@ -294,19 +293,6 @@
         </div>
         <div style="overflow-x:auto">
         <table class="apn-table">
-            <colgroup>
-                <col style="width:64px">
-                <col style="width:110px">
-                <col style="width:170px">
-                <col style="width:96px">
-                <col style="width:96px">
-                <col style="width:110px">
-                <col style="width:88px">
-                <col style="width:88px">
-                <col style="width:130px">
-                <col style="width:130px">
-                <col>
-            </colgroup>
             <thead>
                 <tr>
                     <th class="no-sort">Alerta</th>
@@ -340,7 +326,7 @@
             <div class="form-grid">
                 <div class="form-group full">
                     <label>Nº do Processo</label>
-                    <input type="text" id="pi-processo" placeholder="0000000-00.0000.8.04.0001">
+                    <input type="text" id="pi-processo" placeholder="0000000-00.0000.0.00.0000" maxlength="25">
                 </div>
                 <div class="form-group">
                     <label>Data de Distribuição</label>
@@ -401,7 +387,7 @@
             <div class="form-grid">
                 <div class="form-group full">
                     <label>Nº do Processo</label>
-                    <input type="text" id="cp-processo" placeholder="0000000-00.0000.8.04.0001">
+                    <input type="text" id="cp-processo" placeholder="0000000-00.0000.0.00.0000" maxlength="25">
                 </div>
                 <div class="form-group">
                     <label>Recebimento</label>
@@ -457,7 +443,7 @@
             <div class="form-grid">
                 <div class="form-group full">
                     <label>Nº do Processo</label>
-                    <input type="text" id="ap-processo" placeholder="0000000-00.0000.8.04.0001">
+                    <input type="text" id="ap-processo" placeholder="0000000-00.0000.0.00.0000" maxlength="25">
                 </div>
                 <div class="form-group">
                     <label>Data de Distribuição</label>
@@ -487,7 +473,7 @@
                 </div>
                 <div class="form-group">
                     <label>Fila Processual</label>
-                    <input type="text" id="ap-localizacao">
+                    <select id="ap-localizacao" onchange="handleApnNovaOpcao(this, loadApnFilas, saveApnFilas, 'fila processual')"></select>
                 </div>
                 <div class="form-group">
                     <label>MP / Vara de Origem</label>
@@ -495,7 +481,7 @@
                 </div>
                 <div class="form-group">
                     <label>DPE / Advogado</label>
-                    <input type="text" id="ap-defesa">
+                    <select id="ap-defesa" onchange="handleApnNovaOpcao(this, loadApnDefesas, saveApnDefesas, 'DPE/Advogado')"></select>
                 </div>
                 <div class="form-group">
                     <label>Situação</label>
@@ -549,8 +535,26 @@ let piCardFilter = 'todos';
 let cpCardFilter = 'todos';
 let apCardFilter = 'todos';
 let cpOnlyPrioridade = false;
-let apOnlyArquivado = false;
 let apFilterAlerta = false;
+const STORAGE_APN_FILAS = 'controleProcessual_apn_filas_v1';
+const STORAGE_APN_DEFESAS = 'controleProcessual_apn_defesas_v1';
+
+// ─── MÁSCARA CNJ (0000000-00.0000.0.00.0000) ───────────────────────────────
+function formatProcessoCNJ(value) {
+    const digits = (value || '').replace(/\D/g, '').slice(0, 20);
+    let out = digits.slice(0, 7);
+    if (digits.length > 7) out += '-' + digits.slice(7, 9);
+    if (digits.length > 9) out += '.' + digits.slice(9, 13);
+    if (digits.length > 13) out += '.' + digits.slice(13, 14);
+    if (digits.length > 14) out += '.' + digits.slice(14, 16);
+    if (digits.length > 16) out += '.' + digits.slice(16, 20);
+    return out;
+}
+document.addEventListener('input', e => {
+    if (['pi-processo', 'cp-processo', 'ap-processo'].includes(e.target.id)) {
+        e.target.value = formatProcessoCNJ(e.target.value);
+    }
+});
 
 // ─── AUTH ──────────────────────────────────────────────────────────────────
 function showAuthError(msg) {
@@ -1071,11 +1075,6 @@ function filterApn(card) {
     apCardFilter = apCardFilter === card ? 'todos' : card;
     renderApn();
 }
-function toggleArquivadoFilter() {
-    apOnlyArquivado = !apOnlyArquivado;
-    document.getElementById('ap-arquivado-btn').classList.toggle('active', apOnlyArquivado);
-    renderApn();
-}
 function toggleAlertaApn() {
     apFilterAlerta = !apFilterAlerta;
     renderApn();
@@ -1107,11 +1106,11 @@ function getFilteredApn() {
     if (fase) list = list.filter(p => p.faseProcessual === fase);
     if (julgadoF === 'sim') list = list.filter(p => p.julgado);
     if (julgadoF === 'nao') list = list.filter(p => !p.julgado);
-    if (apOnlyArquivado) list = list.filter(p => p.status === 'Suspenso' || p.status === 'Arquivado');
     if (apFilterAlerta) list = list.filter(p => p._diasMov != null && p._diasMov >= 15);
     if (apCardFilter === 'urgente') list = list.filter(p => p._dias != null && p._dias > 365);
     if (apCardFilter === 'atencao') list = list.filter(p => !p.primeiraSentenca);
     if (apCardFilter === 'julgados') list = list.filter(p => p.julgado);
+    if (apCardFilter === 'arquivados') list = list.filter(p => p.status === 'Suspenso' || p.status === 'Arquivado');
     list.sort((a, b) => {
         let va, vb;
         if (apSort.field === 'tramitacao') { va = a._dias ?? -1; vb = b._dias ?? -1; }
@@ -1147,6 +1146,7 @@ function renderApn() {
     document.getElementById('ap-urgente').textContent = apns.filter(p => (tramitacaoApn(p) || 0) > 365).length;
     document.getElementById('ap-sem-sentenca').textContent = apns.filter(p => !p.primeiraSentenca).length;
     document.getElementById('ap-julgados').textContent = apns.filter(p => p.julgado).length;
+    document.getElementById('ap-arquivados').textContent = apns.filter(p => p.status === 'Suspenso' || p.status === 'Arquivado').length;
     document.getElementById('ap-count').textContent = `${list.length} de ${apns.length} processo(s)`;
     ['tramitacao', 'processo', 'data_distribuicao', 'fase_processual'].forEach(f => {
         const el = document.getElementById('sort-ap-' + f);
@@ -1182,6 +1182,37 @@ function renderApn() {
 document.addEventListener('input', e => { if (e.target.id === 'ap-search') renderApn(); });
 document.addEventListener('change', e => { if (e.target.id === 'ap-filter-fase' || e.target.id === 'ap-filter-julgado') renderApn(); });
 
+function loadApnFilas() {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_APN_FILAS) || '[]');
+    const fromData = apns.map(p => p.localizacao).filter(Boolean);
+    return [...new Set([...stored, ...fromData])].sort((a, b) => a.localeCompare(b));
+}
+function saveApnFilas(list) {
+    localStorage.setItem(STORAGE_APN_FILAS, JSON.stringify(list));
+}
+function loadApnDefesas() {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_APN_DEFESAS) || '[]');
+    const fromData = apns.map(p => p.defesa).filter(Boolean);
+    return [...new Set([...stored, ...fromData])].sort((a, b) => a.localeCompare(b));
+}
+function saveApnDefesas(list) {
+    localStorage.setItem(STORAGE_APN_DEFESAS, JSON.stringify(list));
+}
+function buildApnSelect(selectEl, options, currentValue) {
+    const all = currentValue && !options.includes(currentValue) ? [...options, currentValue] : options;
+    selectEl.innerHTML = '<option value="">Selecione...</option>'
+        + all.map(o => `<option value="${o}">${o}</option>`).join('')
+        + '<option value="__novo__">+ Adicionar novo...</option>';
+    selectEl.value = currentValue || '';
+}
+function handleApnNovaOpcao(selectEl, loadFn, saveFn, label) {
+    if (selectEl.value !== '__novo__') return;
+    const valor = (window.prompt('Novo valor para ' + label + ':') || '').trim();
+    if (!valor) { selectEl.value = ''; return; }
+    const list = loadFn();
+    if (!list.includes(valor)) { list.push(valor); saveFn(list); }
+    buildApnSelect(selectEl, loadFn(), valor);
+}
 function openModalApn(id) {
     const p = id ? apns.find(x => x.id === id) : null;
     document.getElementById('ap-id').value = p ? p.id : '';
@@ -1190,9 +1221,9 @@ function openModalApn(id) {
     document.getElementById('ap-denuncia').value = p ? (p.denuncia || '') : '';
     document.getElementById('ap-status').value = p ? (p.status || 'Ativo') : 'Ativo';
     document.getElementById('ap-fase').value = p ? (p.faseProcessual || '') : '';
-    document.getElementById('ap-localizacao').value = p ? (p.localizacao || '') : '';
+    buildApnSelect(document.getElementById('ap-localizacao'), loadApnFilas(), p ? (p.localizacao || '') : '');
     document.getElementById('ap-mp').value = p ? (p.mpOrigem || '') : '';
-    document.getElementById('ap-defesa').value = p ? (p.defesa || '') : '';
+    buildApnSelect(document.getElementById('ap-defesa'), loadApnDefesas(), p ? (p.defesa || '') : '');
     document.getElementById('ap-sentenca').checked = p ? !!p.primeiraSentenca : false;
     document.getElementById('ap-julgado').checked = p ? !!p.julgado : false;
     document.getElementById('ap-pendencias').value = p ? (p.pendencias || '') : '';
@@ -1232,6 +1263,8 @@ async function saveApn() {
         pendencias: document.getElementById('ap-pendencias').value.trim(),
         updatedAt: new Date().toISOString(),
     };
+    if (p.localizacao) { const filas = loadApnFilas(); if (!filas.includes(p.localizacao)) { filas.push(p.localizacao); saveApnFilas(filas); } }
+    if (p.defesa) { const defesas = loadApnDefesas(); if (!defesas.includes(p.defesa)) { defesas.push(p.defesa); saveApnDefesas(defesas); } }
     const idx = apns.findIndex(x => x.id === id);
     if (idx >= 0) apns[idx] = p; else apns.push(p);
     closeModalApn();

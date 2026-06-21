@@ -42,11 +42,13 @@ create table if not exists tempo_apn (
   defesa text,
   pendencias text,
   status text default 'Ativo',
+  tramitacao_congelada integer,
   updated_at timestamptz default now()
 );
 
--- Migração: garante a coluna status em bases já existentes
+-- Migração: garante as colunas novas em bases já existentes
 alter table tempo_apn add column if not exists status text default 'Ativo';
+alter table tempo_apn add column if not exists tramitacao_congelada integer;
 
 -- Habilita Row Level Security
 alter table processos_idosos enable row level security;

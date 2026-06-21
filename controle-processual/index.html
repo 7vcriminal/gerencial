@@ -264,7 +264,7 @@
 <section id="view-apn" style="display:none">
     <div class="stats-grid">
         <div class="stat-card" onclick="filterApn('todos')"><div class="stat-label">Total</div><div class="stat-value" id="ap-total">0</div><div class="stat-hint">clique para ver todos</div></div>
-        <div class="stat-card urgente" onclick="filterApn('urgente')"><div class="stat-label">Tramitação &gt; 365 dias</div><div class="stat-value" id="ap-urgente">0</div><div class="stat-hint">clique para filtrar</div></div>
+        <div class="stat-card urgente" onclick="filterApn('urgente')"><div class="stat-label">Tramitação &gt; 500 dias</div><div class="stat-value" id="ap-urgente">0</div><div class="stat-hint">clique para filtrar</div></div>
         <div class="stat-card atencao" onclick="filterApn('atencao')"><div class="stat-label">Sem sentença</div><div class="stat-value" id="ap-sem-sentenca">0</div><div class="stat-hint">clique para filtrar</div></div>
         <div class="stat-card" onclick="filterApn('julgados')"><div class="stat-label">Julgados</div><div class="stat-value" id="ap-julgados">0</div><div class="stat-hint">clique para filtrar</div></div>
         <div class="stat-card" onclick="filterApn('arquivados')"><div class="stat-label">Suspensos/Arquivados</div><div class="stat-value" id="ap-arquivados">0</div><div class="stat-hint">clique para filtrar</div></div>
@@ -530,7 +530,7 @@ let cpSort = { field: 'tramitacao', dir: 'desc' };
 let apSort = { field: 'tramitacao', dir: 'desc' };
 let piCardFilter = 'todos';
 let cpCardFilter = 'todos';
-let apCardFilter = 'todos';
+let apCardFilter = 'pendentes';
 let cpOnlyPrioridade = false;
 let apFilterAlerta = false;
 const STORAGE_APN_FILAS = 'controleProcessual_apn_filas_v1';
@@ -1072,7 +1072,8 @@ async function deleteCarta() {
 // ═══════════════════════════ TEMPO DE APN ═══════════════════════════
 
 function filterApn(card) {
-    apCardFilter = apCardFilter === card ? 'todos' : card;
+    apCardFilter = apCardFilter === card ? 'pendentes' : card;
+    if (apCardFilter === 'todos') apFilterAlerta = false;
     renderApn();
 }
 function toggleAlertaApn() {
@@ -1107,7 +1108,8 @@ function getFilteredApn() {
     if (julgadoF === 'sim') list = list.filter(p => p.julgado);
     if (julgadoF === 'nao') list = list.filter(p => !p.julgado);
     if (apFilterAlerta) list = list.filter(p => p._diasMov != null && p._diasMov >= 15);
-    if (apCardFilter === 'urgente') list = list.filter(p => p._dias != null && p._dias > 365);
+    if (apCardFilter === 'pendentes') list = list.filter(p => p.status !== 'Suspenso' && p.status !== 'Arquivado');
+    if (apCardFilter === 'urgente') list = list.filter(p => p._dias != null && p._dias > 500);
     if (apCardFilter === 'atencao') list = list.filter(p => !p.primeiraSentenca);
     if (apCardFilter === 'julgados') list = list.filter(p => p.julgado);
     if (apCardFilter === 'arquivados') list = list.filter(p => p.status === 'Suspenso' || p.status === 'Arquivado');
@@ -1143,7 +1145,7 @@ function renderApn() {
     renderAlertaApn();
     const list = getFilteredApn();
     document.getElementById('ap-total').textContent = apns.length;
-    document.getElementById('ap-urgente').textContent = apns.filter(p => (tramitacaoApn(p) || 0) > 365).length;
+    document.getElementById('ap-urgente').textContent = apns.filter(p => (tramitacaoApn(p) || 0) > 500).length;
     document.getElementById('ap-sem-sentenca').textContent = apns.filter(p => !p.primeiraSentenca).length;
     document.getElementById('ap-julgados').textContent = apns.filter(p => p.julgado).length;
     document.getElementById('ap-arquivados').textContent = apns.filter(p => p.status === 'Suspenso' || p.status === 'Arquivado').length;

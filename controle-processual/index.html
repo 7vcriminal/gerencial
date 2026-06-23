@@ -590,6 +590,8 @@ function setModule(m) {
     document.getElementById('tab-cartas').classList.toggle('active', m === 'cartas');
     document.getElementById('view-idosos').style.display = m === 'idosos' ? '' : 'none';
     document.getElementById('view-cartas').style.display = m === 'cartas' ? '' : 'none';
+    document.getElementById('view-apn').style.display = m === 'apn' ? '' : 'none';
+    if (m === 'apn') renderApn();
 }
 
 // ═══════════════════════════ PROCESSOS IDOSOS ═══════════════════════════
@@ -863,6 +865,237 @@ async function deleteCarta() {
     renderCartas();
     await removeCarta(id);
     showToast('Carta precatória excluída');
+}
+
+// ═══════════════════════════ TEMPO DE APN ═══════════════════════════
+
+function filterApn(card) {
+    apCardFilter = apCardFilter === card ? 'pendentes' : card;
+    if (apCardFilter === 'todos') apFilterAlerta = false;
+    renderApn();
+}
+function toggleAlertaApn() {
+    apFilterAlerta = !apFilterAlerta;
+    renderApn();
+}
+function sortApn(field) {
+    if (apSort.field === field) apSort.dir = apSort.dir === 'asc' ? 'desc' : 'asc';
+    else { apSort.field = field; apSort.dir = 'desc'; }
+    renderApn();
+}
+function tramitacaoApn(p) {
+    return (p.status === 'Suspenso' || p.status === 'Arquivado') && p.tramitacaoCongelada != null
+        ? p.tramitacaoCongelada
+        : diasDesde(p.dataDistribuicao);
+}
+function getFilteredApn() {
+    const term = (document.getElementById('ap-search').value || '').toLowerCase();
+    const fase = document.getElementById('ap-filter-fase').value;
+    const julgadoF = document.getElementById('ap-filter-julgado').value;
+    let list = apns.map(p => ({ ...p, _dias: tramitacaoApn(p), _diasMov: p.updatedAt ? diasDesde(p.updatedAt.slice(0, 10)) : 999 }));
+    if (term) {
+        list = list.filter(p =>
+            (p.processo || '').toLowerCase().includes(term) ||
+            (p.faseProcessual || '').toLowerCase().includes(term) ||
+            (p.mpOrigem || '').toLowerCase().includes(term) ||
+            (p.defesa || '').toLowerCase().includes(term) ||
+            (p.pendencias || '').toLowerCase().includes(term)
+        );
+    }
+    if (fase) list = list.filter(p => p.faseProcessual === fase);
+    if (julgadoF === 'sim') list = list.filter(p => p.julgado);
+    if (julgadoF === 'nao') list = list.filter(p => !p.julgado);
+    if (apFilterAlerta) list = list.filter(p => p._diasMov != null && p._diasMov >= 15);
+    if (apCardFilter === 'pendentes') list = list.filter(p => p.status !== 'Suspenso' && p.status !== 'Arquivado');
+    if (apCardFilter === 'urgente') list = list.filter(p => p._dias != null && p._dias > 500);
+    if (apCardFilter === 'atencao') list = list.filter(p => !p.primeiraSentenca);
+    if (apCardFilter === 'julgados') list = list.filter(p => p.julgado);
+    if (apCardFilter === 'arquivados') list = list.filter(p => p.status === 'Suspenso' || p.status === 'Arquivado');
+    list.sort((a, b) => {
+        let va, vb;
+        if (apSort.field === 'tramitacao') { va = a._dias ?? -1; vb = b._dias ?? -1; }
+        else { va = (a[apSort.field] || '').toString(); vb = (b[apSort.field] || '').toString(); }
+        if (va < vb) return apSort.dir === 'asc' ? -1 : 1;
+        if (va > vb) return apSort.dir === 'asc' ? 1 : -1;
+        return 0;
+    });
+    return list;
+}
+function renderAlertaApn() {
+    const banner = document.getElementById('ap-alerta-banner');
+    const total = apns.filter(p => {
+        const d = p.updatedAt ? diasDesde(p.updatedAt.slice(0, 10)) : 999;
+        return d != null && d >= 15;
+    }).length;
+    if (total > 0) {
+        banner.style.display = 'flex';
+        banner.style.background = apFilterAlerta ? '#b91c1c' : '#fef2f2';
+        banner.style.border = `1px solid ${apFilterAlerta ? '#7f1d1d' : '#fecaca'}`;
+        banner.style.color = apFilterAlerta ? '#fff' : '#b91c1c';
+        const filterLabel = apFilterAlerta ? ' — <span style="text-decoration:underline">clique para mostrar todos</span>' : ' — <span style="text-decoration:underline">clique para filtrar</span>';
+        banner.innerHTML = `<i class="fas fa-triangle-exclamation"></i> <strong>${total} processo(s)</strong> sem movimentação há 15 dias ou mais${filterLabel}`;
+    } else {
+        banner.style.display = 'none';
+        if (apFilterAlerta) apFilterAlerta = false;
+    }
+}
+function renderApn() {
+    renderAlertaApn();
+    const list = getFilteredApn();
+    document.getElementById('ap-total').textContent = apns.length;
+    document.getElementById('ap-urgente').textContent = apns.filter(p => (tramitacaoApn(p) || 0) > 500).length;
+    document.getElementById('ap-sem-sentenca').textContent = apns.filter(p => !p.primeiraSentenca).length;
+    document.getElementById('ap-julgados').textContent = apns.filter(p => p.julgado).length;
+    document.getElementById('ap-arquivados').textContent = apns.filter(p => p.status === 'Suspenso' || p.status === 'Arquivado').length;
+    document.getElementById('ap-count').textContent = `${list.length} de ${apns.length} processo(s)`;
+    ['tramitacao', 'processo', 'data_distribuicao', 'fase_processual'].forEach(f => {
+        const el = document.getElementById('sort-ap-' + f);
+        if (el) el.textContent = apSort.field === f ? (apSort.dir === 'asc' ? '▲' : '▼') : '';
+    });
+    const tbody = document.getElementById('ap-table-body');
+    if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><i class="fas fa-folder-open"></i><div>Nenhum processo encontrado</div></div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = list.map(p => {
+        const ok = p.status === 'Suspenso' || p.status === 'Arquivado';
+        const stale = p._diasMov != null && p._diasMov >= 15;
+        const staleTitle = !p.updatedAt ? 'Sem atualização registrada no sistema' : `Sem movimentação há ${p._diasMov} dias`;
+        return `
+        <tr onclick="openModalApn(${p.id})">
+            <td class="center">${ok
+                ? '<span class="badge badge-sim"><i class="fas fa-check"></i> OK</span>'
+                : '<span class="badge badge-nao"><i class="fas fa-exclamation"></i> Pendente</span>'}</td>
+            <td class="center"><span class="dias-pill ${diasClass(p._dias, 180, 500)}">${p._dias != null ? p._dias + ' dias' : '—'}</span></td>
+            <td class="proc-num">${p.processo}${stale ? ` <i class="fas fa-triangle-exclamation" style="color:var(--red)" title="${staleTitle}"></i>` : ''}</td>
+            <td class="center">${p.status || 'Ativo'}</td>
+            <td class="center">${fmtData(p.dataDistribuicao)}</td>
+            <td class="center">${fmtData(p.denuncia)}</td>
+            <td class="center"><span class="badge ${p.primeiraSentenca ? 'badge-sim' : 'badge-nao'}">${p.primeiraSentenca ? 'Sim' : 'Não'}</span></td>
+            <td class="center"><span class="badge ${p.julgado ? 'badge-sim' : 'badge-nao'}">${p.julgado ? 'Sim' : 'Não'}</span></td>
+            <td>${p.faseProcessual || '—'}</td>
+            <td>${p.localizacao || '—'}</td>
+            <td class="pendencia-preview" title="${(p.pendencias || '').replace(/"/g, '&quot;')}">${p.pendencias || '—'}</td>
+        </tr>
+    `;
+    }).join('');
+}
+document.addEventListener('input', e => { if (e.target.id === 'ap-search') renderApn(); });
+document.addEventListener('change', e => { if (e.target.id === 'ap-filter-fase' || e.target.id === 'ap-filter-julgado') renderApn(); });
+
+function loadApnFilas() {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_APN_FILAS) || '[]');
+    const fromData = apns.map(p => p.localizacao).filter(Boolean);
+    return [...new Set([...stored, ...fromData])].sort((a, b) => a.localeCompare(b));
+}
+function saveApnFilas(list) {
+    localStorage.setItem(STORAGE_APN_FILAS, JSON.stringify(list));
+}
+function loadApnStatus() {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_APN_STATUS) || '[]');
+    const fromData = apns.map(p => p.status).filter(Boolean);
+    return [...new Set([...DEFAULT_APN_STATUS, ...stored, ...fromData])];
+}
+function saveApnStatus(list) {
+    localStorage.setItem(STORAGE_APN_STATUS, JSON.stringify(list));
+}
+function loadApnFases() {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_APN_FASES) || '[]');
+    const fromData = apns.map(p => p.faseProcessual).filter(Boolean);
+    return [...new Set([...DEFAULT_APN_FASES, ...stored, ...fromData])];
+}
+function saveApnFases(list) {
+    localStorage.setItem(STORAGE_APN_FASES, JSON.stringify(list));
+}
+function buildApnSelect(selectEl, options, currentValue) {
+    const all = currentValue && !options.includes(currentValue) ? [...options, currentValue] : options;
+    selectEl.innerHTML = '<option value="">Selecione...</option>'
+        + all.map(o => `<option value="${o}">${o}</option>`).join('')
+        + '<option value="__novo__">+ Adicionar novo...</option>';
+    selectEl.value = currentValue || '';
+}
+function handleApnNovaOpcao(selectEl, loadFn, saveFn, label) {
+    if (selectEl.value !== '__novo__') return;
+    const valor = (window.prompt('Novo valor para ' + label + ':') || '').trim();
+    if (!valor) { selectEl.value = ''; return; }
+    const list = loadFn();
+    if (!list.includes(valor)) { list.push(valor); saveFn(list); }
+    buildApnSelect(selectEl, loadFn(), valor);
+}
+function openModalApn(id) {
+    const p = id ? apns.find(x => x.id === id) : null;
+    document.getElementById('ap-id').value = p ? p.id : '';
+    document.getElementById('ap-processo').value = p ? p.processo : '';
+    document.getElementById('ap-data-distribuicao').value = p ? (p.dataDistribuicao || '') : '';
+    document.getElementById('ap-denuncia').value = p ? (p.denuncia || '') : '';
+    buildApnSelect(document.getElementById('ap-status'), loadApnStatus(), p ? (p.status || 'Ativo') : 'Ativo');
+    buildApnSelect(document.getElementById('ap-fase'), loadApnFases(), p ? (p.faseProcessual || '') : '');
+    buildApnSelect(document.getElementById('ap-localizacao'), loadApnFilas(), p ? (p.localizacao || '') : '');
+    document.getElementById('ap-mp').value = p ? (p.mpOrigem || '') : '';
+    const defesaVal = p ? (p.defesa || '') : '';
+    document.getElementById('ap-defesa-dpe').checked = defesaVal.includes('DPE');
+    document.getElementById('ap-defesa-adv').checked = defesaVal.includes('ADV');
+    document.getElementById('ap-sentenca').checked = p ? !!p.primeiraSentenca : false;
+    document.getElementById('ap-julgado').checked = p ? !!p.julgado : false;
+    document.getElementById('ap-pendencias').value = p ? (p.pendencias || '') : '';
+    document.getElementById('modal-apn-title').textContent = p ? 'Editar Processo' : 'Novo Processo';
+    document.getElementById('ap-del-btn').style.display = p ? '' : 'none';
+    document.getElementById('modal-apn').classList.add('open');
+}
+function closeModalApn() { document.getElementById('modal-apn').classList.remove('open'); }
+async function saveApn() {
+    const processo = document.getElementById('ap-processo').value.trim();
+    if (!processo) { showToast('Informe o número do processo', 'error'); return; }
+    const idVal = document.getElementById('ap-id').value;
+    const id = idVal ? Number(idVal) : nextApnId++;
+    const old = apns.find(x => x.id === id);
+    const status = document.getElementById('ap-status').value;
+    const dataDistribuicao = document.getElementById('ap-data-distribuicao').value || null;
+    let tramitacaoCongelada = old ? old.tramitacaoCongelada : null;
+    if (status === 'Suspenso' || status === 'Arquivado') {
+        if (!old || old.status === 'Ativo' || tramitacaoCongelada == null) {
+            tramitacaoCongelada = diasDesde(dataDistribuicao);
+        }
+    } else {
+        tramitacaoCongelada = null;
+    }
+    const defesaParts = [];
+    if (document.getElementById('ap-defesa-dpe').checked) defesaParts.push('DPE');
+    if (document.getElementById('ap-defesa-adv').checked) defesaParts.push('ADV');
+    const p = {
+        id, processo,
+        dataDistribuicao,
+        denuncia: document.getElementById('ap-denuncia').value || null,
+        status,
+        tramitacaoCongelada,
+        faseProcessual: document.getElementById('ap-fase').value,
+        localizacao: document.getElementById('ap-localizacao').value.trim(),
+        mpOrigem: document.getElementById('ap-mp').value,
+        defesa: defesaParts.join(', '),
+        primeiraSentenca: document.getElementById('ap-sentenca').checked,
+        julgado: document.getElementById('ap-julgado').checked,
+        pendencias: document.getElementById('ap-pendencias').value.trim(),
+        updatedAt: new Date().toISOString(),
+    };
+    if (p.localizacao) { const filas = loadApnFilas(); if (!filas.includes(p.localizacao)) { filas.push(p.localizacao); saveApnFilas(filas); } }
+    if (status) { const statuses = loadApnStatus(); if (!statuses.includes(status)) { statuses.push(status); saveApnStatus(statuses); } }
+    if (p.faseProcessual) { const fases = loadApnFases(); if (!fases.includes(p.faseProcessual)) { fases.push(p.faseProcessual); saveApnFases(fases); } }
+    const idx = apns.findIndex(x => x.id === id);
+    if (idx >= 0) apns[idx] = p; else apns.push(p);
+    closeModalApn();
+    renderApn();
+    await persistApn(p);
+    showToast('Processo salvo com sucesso');
+}
+async function deleteApn() {
+    const id = Number(document.getElementById('ap-id').value);
+    if (!id) return;
+    if (!confirm('Excluir este processo do controle?')) return;
+    apns = apns.filter(x => x.id !== id);
+    closeModalApn();
+    renderApn();
+    await removeApn(id);
+    showToast('Processo excluído');
 }
 </script>
 </body>

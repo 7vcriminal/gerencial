@@ -147,7 +147,8 @@
         thead th:hover { color: var(--primary); }
         thead th.no-sort { cursor: default; }
         thead th.no-sort:hover { color: var(--muted); }
-        tbody tr { border-bottom: 2px solid #94a3b8; transition: background 0.15s; }
+        tbody tr { border-bottom: 2px solid #cbd5e0; transition: background 0.15s; }
+        tbody tr.day-end-row { border-bottom: 3px solid #475569; }
         tbody tr:hover { background: #f8fafc; }
         tbody tr.preso-row { background: #fff8f8; }
         tbody tr.preso-row:hover { background: #fdecea; }
@@ -1405,7 +1406,9 @@ function renderTable(filtered) {
         return;
     }
     const showAno = currentAno === 'Historico';
-    document.getElementById('table-body').innerHTML = filtered.map(a => {
+    document.getElementById('table-body').innerHTML = filtered.map((a, idx) => {
+        const nextA = filtered[idx + 1];
+        const isDayEnd = !nextA || (nextA.data || '') !== (a.data || '');
         const slot = isSlot(a);
         const al   = getAlertas(a);
         const alertaProj = al.includes('projudi');
@@ -1422,7 +1425,7 @@ function renderTable(filtered) {
             a.prioMeta2     ? '<i class="fas fa-hourglass-half" title="Meta 2+"></i>' : '',
         ].filter(Boolean).join('');
         return `
-        <tr class="${a.reservado?'reservado-row':(a.reuPreso?'preso-row':'')} ${slot?'slot-row':''} ${al.length?'has-alert':''}" onclick="openModal(${a.id})" style="cursor:pointer">
+        <tr class="${a.reservado?'reservado-row':(a.reuPreso?'preso-row':'')} ${slot?'slot-row':''} ${al.length?'has-alert':''} ${isDayEnd?'day-end-row':''}" onclick="openModal(${a.id})" style="cursor:pointer">
             <td class="data">${fmtData(a.data)}${showAno?`<br><small style="color:var(--muted)">${a.ano||2026}</small>`:''}</td>
             <td class="hora">${a.hora||'--:--'}</td>
             <td class="reu">${a.reservado ? '<span class="reu-nome" style="color:#c2540a;font-weight:700"><i class="fas fa-lock"></i> RESERVADO REU PRESO</span>' : (slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu ? a.reu.split(' / ').map((n, i) => { const preso = a.reusPreso ? a.reusPreso[i] : (a.reuPreso && i===0); const presoIcon = preso ? '<i class="fas fa-handcuffs" title="Réu Preso" style="color:var(--red)"></i>' : ''; const badges = presoIcon + (i===0 ? prioBadges : ''); return `<span class="reu-nome" ${preso?'style="color:var(--red)"':''}>${n}${badges ? `<span class="prio-badges" style="flex-shrink:0">${badges}</span>` : ''}</span>`; }).join('') : '—'))}</td>

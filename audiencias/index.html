@@ -409,10 +409,15 @@
 
     <!-- STATS CLICÁVEIS -->
     <div class="stats-grid" id="stats-grid">
+        <div class="stat-card" style="border-color:#0ea5e9;cursor:pointer" onclick="filterByCard('previstas')" title="Total de horários cadastrados">
+            <div class="stat-label">Total Previstas</div>
+            <div class="stat-value" id="s-previstas" style="color:#0ea5e9">0</div>
+            <div class="stat-hint">clique para ver todas</div>
+        </div>
         <div class="stat-card total" onclick="filterByCard('total')" title="Clique para ver todas">
             <div class="stat-label">Total Pautadas</div>
             <div class="stat-value" id="s-total">0</div>
-            <div class="stat-hint">clique para ver todas</div>
+            <div class="stat-hint">clique para filtrar</div>
         </div>
         <div class="stat-card realizada" onclick="filterByCard('realizada')" title="Filtrar realizadas">
             <div class="stat-label">Realizadas</div>
@@ -444,8 +449,8 @@
             <div class="stat-value" id="s-preso">0</div>
             <div class="stat-hint">clique para filtrar</div>
         </div>
-        <div class="stat-card" style="border-color:#6366f1;cursor:pointer" onclick="filterByCard('slot')" title="Filtrar horários não preenchidos">
-            <div class="stat-label">Não Preenchidas</div>
+        <div class="stat-card" style="border-color:#6366f1;cursor:pointer" onclick="filterByCard('slot')" title="Filtrar horários vagos">
+            <div class="stat-label">Horários Vagos</div>
             <div class="stat-value" id="s-slot" style="color:#6366f1">0</div>
             <div class="stat-hint">clique para filtrar</div>
         </div>
@@ -556,7 +561,8 @@
         <table>
             <thead>
                 <tr>
-                    <th onclick="sortBy('data')"># Data <span id="sort-data"></span></th>
+                    <th class="no-sort" style="width:2rem;text-align:center">#</th>
+                    <th onclick="sortBy('data')">Data <span id="sort-data"></span></th>
                     <th onclick="sortBy('hora')">Hora <span id="sort-hora"></span></th>
                     <th onclick="sortBy('reu')">Réu <span id="sort-reu"></span></th>
                     <th onclick="sortBy('processo')">Processo <span id="sort-processo"></span></th>
@@ -1253,7 +1259,7 @@ function getDataScoped() {
 }
 function getFiltered() {
     return getDataScoped().filter(a => {
-        if (!a.data && !filterAlerta && filterStatus !== 'SemData') return false; // sem data: ocultar salvo quando filtro de alertas ou "sem data" ativo
+        if (!a.data && !filterAlerta && filterStatus !== 'SemData' && activeCard !== 'previstas') return false; // sem data: ocultar salvo quando filtro de alertas ou "sem data" ativo
         if (currentMes !== 'Todos' && a.mes !== currentMes) return false;
         if (filterPreso && !a.reuPreso) return false;
         // card filter
@@ -1313,7 +1319,7 @@ function fmtData(d) {
 }
 function countStats(data) {
     return {
-        total: data.length,
+        total: data.filter(a => a.processo && !a.reservado && a.data && a.hora).length,
         realizada: data.filter(a => { const s=(a.status||'').toLowerCase(); return s.includes('conclu')||(s.includes('realiz')&&!s.includes('parc')); }).length,
         parcial:   data.filter(a => (a.status||'').toLowerCase().includes('parc')).length,
         redesignada: data.filter(a => (a.status||'').toLowerCase().includes('redesig')).length,
@@ -1376,8 +1382,9 @@ function buildSelectores() {
     buildMagistradoFilter();
 }
 
-function updateStatsCards(prefix, data) {
+function updateStatsCards(prefix, data, previstas) {
     const s = countStats(data);
+    if (document.getElementById(`${prefix}-previstas`)) document.getElementById(`${prefix}-previstas`).textContent = previstas ?? getDataScoped().length;
     document.getElementById(`${prefix}-total`).textContent = s.total;
     document.getElementById(`${prefix}-realizada`).textContent = s.realizada;
     document.getElementById(`${prefix}-parcial`).textContent = s.parcial;
@@ -1389,7 +1396,7 @@ function updateStatsCards(prefix, data) {
     // highlight active card
     if (prefix === 's') {
         document.querySelectorAll('#stats-grid .stat-card').forEach(c => c.classList.remove('active-filter'));
-        const map = {total:0,realizada:1,parcial:2,redesignada:3,pendente:4,cancelada:5,preso:6,slot:7};
+        const map = {previstas:0,total:1,realizada:2,parcial:3,redesignada:4,pendente:5,cancelada:6,preso:7,slot:8};
         const idx = map[activeCard];
         if (idx !== undefined) {
             const cards = document.querySelectorAll('#stats-grid .stat-card');
@@ -1403,7 +1410,7 @@ function renderTable(filtered) {
         `${filtered.length} audiência${filtered.length!==1?'s':''} exibida${filtered.length!==1?'s':''}`;
     if (!filtered.length) {
         document.getElementById('table-body').innerHTML =
-            `<tr><td colspan="13"><div class="empty-state"><i class="fas fa-calendar-xmark"></i><p>Nenhuma audiência encontrada com os filtros selecionados.</p></div></td></tr>`;
+            `<tr><td colspan="14"><div class="empty-state"><i class="fas fa-calendar-xmark"></i><p>Nenhuma audiência encontrada com os filtros selecionados.</p></div></td></tr>`;
         return;
     }
     const showAno = currentAno === 'Historico';
@@ -1427,6 +1434,7 @@ function renderTable(filtered) {
         ].filter(Boolean).join('');
         return `
         <tr class="${a.reservado?'reservado-row':(a.reuPreso?'preso-row':'')} ${slot?'slot-row':''} ${al.length?'has-alert':''} ${isDayEnd?'day-end-row':''}" onclick="openModal(${a.id})" style="cursor:pointer">
+            <td style="text-align:center;color:var(--muted);font-size:0.78rem;font-weight:600">${idx+1}</td>
             <td class="data">${fmtData(a.data)}${showAno?`<br><small style="color:var(--muted)">${a.ano||2026}</small>`:''}</td>
             <td class="hora">${a.hora||'--:--'}</td>
             <td class="reu">${a.reservado ? '<span class="reu-nome" style="color:#c2540a;font-weight:700"><i class="fas fa-lock"></i> RESERVADO REU PRESO</span>' : (slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu ? a.reu.split(' / ').map((n, i) => { const preso = a.reusPreso ? a.reusPreso[i] : (a.reuPreso && i===0); const presoIcon = preso ? '<i class="fas fa-handcuffs" title="Réu Preso" style="color:var(--red)"></i>' : ''; const badges = presoIcon + (i===0 ? prioBadges : ''); return `<span class="reu-nome" ${preso?'style="color:var(--red)"':''}>${n}${badges ? `<span class="prio-badges" style="flex-shrink:0">${badges}</span>` : ''}</span>`; }).join('') : '—'))}</td>
@@ -1540,7 +1548,8 @@ function render() {
     buildYearTabs();
     buildMesTabs();
     buildSelectores();
-    updateStatsCards('s', getStatsData());
+    const previstas = getDataScoped().length;
+    updateStatsCards('s', getStatsData(), previstas);
     renderTable(getFiltered());
     updateSortIcons();
     renderAlertaBanner();
@@ -1829,7 +1838,7 @@ function setPrioridades(prefix, a) {
     });
 }
 
-document.getElementById('preencher-modal').addEventListener('click', e => { if (e.target===e.currentTarget) closePreencher(); });
+// click fora do modal desabilitado — fechar apenas pelo rodapé ou pelo X
 
 function maskProcesso(el) {
     let v = el.value.replace(/\D/g,'');
@@ -1957,7 +1966,6 @@ function deleteFromModal() {
     deleteAudiencia(id);
 }
 
-document.getElementById('form-modal').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal(); });
 
 // ─── CADASTROS ────────────────────────────────────────────────────────────────
 

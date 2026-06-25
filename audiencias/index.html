@@ -891,7 +891,7 @@ let relFilterDataDe = '';
 let relFilterDataAte = '';
 let filterPreso  = false;
 let filterAlerta = false;
-let activeCard   = 'total';
+let activeCard   = 'previstas';
 let searchTerm   = '';
 let sortField    = 'data';
 let sortDir      = 1;
@@ -1571,6 +1571,7 @@ function updateSortIcons() {
 function setAno(ano) {
     currentAno = ano;
     currentMes = 'Todos';
+    activeCard = 'previstas';
     if (currentView === 'agenda') render();
     else { buildYearTabs(); renderRelatorios(); }
 }
@@ -1617,7 +1618,7 @@ function toggleAlertaFilter() {
 }
 
 document.getElementById('search-input').addEventListener('input', e => { searchTerm = e.target.value; render(); });
-document.getElementById('filter-status').addEventListener('change', e => { filterStatus = e.target.value; activeCard = 'total'; render(); });
+document.getElementById('filter-status').addEventListener('change', e => { filterStatus = e.target.value; activeCard = 'previstas'; render(); });
 document.getElementById('filter-magistrado').addEventListener('change', e => { filterMagistrado = e.target.value; render(); });
 document.getElementById('filter-data-de').addEventListener('change',  e => { filterDataDe  = e.target.value; render(); });
 document.getElementById('filter-data-ate').addEventListener('change', e => { filterDataAte = e.target.value; render(); });

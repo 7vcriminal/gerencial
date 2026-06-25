@@ -1323,9 +1323,9 @@ function countStats(data) {
         realizada: data.filter(a => { const s=(a.status||'').toLowerCase(); return s.includes('conclu')||(s.includes('realiz')&&!s.includes('parc')); }).length,
         parcial:   data.filter(a => (a.status||'').toLowerCase().includes('parc')).length,
         redesignada: data.filter(a => (a.status||'').toLowerCase().includes('redesig')).length,
-        pendente:  data.filter(a => !a.status).length,
+        pendente:  data.filter(a => !a.status && a.processo && !a.reservado && a.data && a.hora).length,
         cancelada: data.filter(a => (a.status||'').toLowerCase().includes('cancel')).length,
-        preso:     data.filter(a => a.reuPreso).length,
+        preso:     data.filter(a => a.reuPreso && a.processo && !a.reservado && a.data && a.hora).length,
         slot:      data.filter(a => !a.processo).length,
     };
 }

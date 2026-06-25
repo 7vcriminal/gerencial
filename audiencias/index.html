@@ -1354,8 +1354,8 @@ function buildMesTabs() {
     const data = getDataScoped().filter(a => !!a.data);
     const counts = {};
     data.forEach(a => { counts[a.mes] = (counts[a.mes]||0)+1; });
-    let html = `<button class="mes-tab ${currentMes==='Todos'?'active':''}" onclick="setMes('Todos')">Todos (${data.length})</button>`;
-    MESES.forEach(m => { if (counts[m]) html += `<button class="mes-tab ${currentMes===m?'active':''}" onclick="setMes('${m}')">${m} (${counts[m]})</button>`; });
+    let html = `<button class="mes-tab ${currentMes==='Todos'?'active':''}" onclick="setMes('Todos')">Todos</button>`;
+    MESES.forEach(m => { if (counts[m]) html += `<button class="mes-tab ${currentMes===m?'active':''}" onclick="setMes('${m}')">${m}</button>`; });
     document.getElementById('mes-tabs').innerHTML = html;
 }
 

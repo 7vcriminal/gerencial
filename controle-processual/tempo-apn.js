@@ -152,22 +152,20 @@
         };
     }
 
-    // === PATCH initApp — inicializa APN automaticamente sem precisar de hook no index.html ===
-    const _origInitApp = window.initApp;
-    if (typeof _origInitApp === 'function') {
-        window.initApp = async function () {
-            await _origInitApp.apply(this, arguments);
-            await window.__apnInit();
-        };
-    }
-
-    // === PATCH subscribeRealtime — inscreve APN automaticamente ===
-    const _origSubscribe = window.subscribeRealtime;
-    if (typeof _origSubscribe === 'function') {
-        window.subscribeRealtime = function () {
-            _origSubscribe.apply(this, arguments);
-            window.__apnSubscribe();
-        };
+    // === INICIALIZAÇÃO AUTÔNOMA via onAuthStateChange ===
+    // Usa listener próprio em vez de monkey-patch para evitar race condition com F5
+    let _apnInitialized = false;
+    if (typeof sb !== 'undefined') {
+        sb.auth.onAuthStateChange(async (event, session) => {
+            if (session && !_apnInitialized) {
+                _apnInitialized = true;
+                await window.__apnInit();
+                window.__apnSubscribe();
+            }
+            if (!session) {
+                _apnInitialized = false;
+            }
+        });
     }
 
     // Registrar listener de input para máscara CNJ no campo ap-processo

@@ -1548,7 +1548,7 @@ function render() {
     buildYearTabs();
     buildMesTabs();
     buildSelectores();
-    const previstas = getDataScoped().length;
+    const previstas = getDataScoped().filter(a => currentMes === 'Todos' || a.mes === currentMes).length;
     updateStatsCards('s', getStatsData(), previstas);
     renderTable(getFiltered());
     updateSortIcons();

@@ -152,6 +152,24 @@
         };
     }
 
+    // === PATCH initApp — inicializa APN automaticamente sem precisar de hook no index.html ===
+    const _origInitApp = window.initApp;
+    if (typeof _origInitApp === 'function') {
+        window.initApp = async function () {
+            await _origInitApp.apply(this, arguments);
+            await window.__apnInit();
+        };
+    }
+
+    // === PATCH subscribeRealtime — inscreve APN automaticamente ===
+    const _origSubscribe = window.subscribeRealtime;
+    if (typeof _origSubscribe === 'function') {
+        window.subscribeRealtime = function () {
+            _origSubscribe.apply(this, arguments);
+            window.__apnSubscribe();
+        };
+    }
+
     // Registrar listener de input para máscara CNJ no campo ap-processo
     document.addEventListener('input', function (e) {
         if (e.target.id === 'ap-processo' && typeof formatProcessoCNJ === 'function') {

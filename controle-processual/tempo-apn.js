@@ -241,10 +241,12 @@ window.__apnSubscribe = function () {
 };
 
 // === LÓGICA DE TRAMITAÇÃO ===
+// Tramitação só é contada a partir da data da denúncia
 function tramitacaoApn(p) {
-    return (p.status === 'Suspenso' || p.status === 'Arquivado') && p.tramitacaoCongelada != null
-        ? p.tramitacaoCongelada
-        : diasDesde(p.dataDistribuicao);
+    if ((p.status === 'Suspenso' || p.status === 'Arquivado') && p.tramitacaoCongelada != null)
+        return p.tramitacaoCongelada;
+    if (!p.denuncia) return null;
+    return diasDesde(p.denuncia);
 }
 
 // === FILTROS E ORDENAÇÃO ===
@@ -437,10 +439,11 @@ async function saveApn() {
     const old = apns.find(x => x.id === id);
     const status = document.getElementById('ap-status').value;
     const dataDistribuicao = document.getElementById('ap-data-distribuicao').value || null;
+    const denuncia = document.getElementById('ap-denuncia').value || null;
     let tramitacaoCongelada = old ? old.tramitacaoCongelada : null;
     if (status === 'Suspenso' || status === 'Arquivado') {
         if (!old || old.status === 'Ativo' || tramitacaoCongelada == null) {
-            tramitacaoCongelada = diasDesde(dataDistribuicao);
+            tramitacaoCongelada = denuncia ? diasDesde(denuncia) : null;
         }
     } else {
         tramitacaoCongelada = null;
@@ -451,7 +454,7 @@ async function saveApn() {
     const p = {
         id, processo,
         dataDistribuicao,
-        denuncia: document.getElementById('ap-denuncia').value || null,
+        denuncia,
         status,
         tramitacaoCongelada,
         faseProcessual: document.getElementById('ap-fase').value,

@@ -169,6 +169,7 @@
 <div class="module-tabs">
     <button class="module-tab active" id="tab-idosos" onclick="setModule('idosos')"><i class="fas fa-hourglass-half"></i> Processos Idosos</button>
     <button class="module-tab" id="tab-cartas" onclick="setModule('cartas')"><i class="fas fa-envelope-open-text"></i> Cartas Precatórias</button>
+    <button class="module-tab" id="tab-apn" onclick="setModule('apn')"><i class="fas fa-gavel"></i> Tempo de APN</button>
 </div>
 
 <!-- ===== MÓDULO: PROCESSOS IDOSOS ===== -->
@@ -588,6 +589,7 @@ function setModule(m) {
     currentModule = m;
     document.getElementById('tab-idosos').classList.toggle('active', m === 'idosos');
     document.getElementById('tab-cartas').classList.toggle('active', m === 'cartas');
+    document.getElementById('tab-apn').classList.toggle('active', m === 'apn');
     document.getElementById('view-idosos').style.display = m === 'idosos' ? '' : 'none';
     document.getElementById('view-cartas').style.display = m === 'cartas' ? '' : 'none';
     document.getElementById('view-apn').style.display = m === 'apn' ? '' : 'none';

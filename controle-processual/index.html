@@ -643,26 +643,30 @@ function rowToApn(r) {
 // ─── INIT / SYNC ─────────────────────────────────────────────────────────
 async function initApp() {
     try {
-        const [{ data: piRows, error: e1 }, { data: cpRows, error: e2 }, { data: apRows, error: e3 }] = await Promise.all([
+        const [{ data: piRows, error: e1 }, { data: cpRows, error: e2 }] = await Promise.all([
             sb.from('processos_idosos').select('*'),
             sb.from('cartas_precatorias').select('*'),
-            sb.from('tempo_apn').select('*'),
         ]);
         if (e1) throw e1;
         if (e2) throw e2;
-        if (e3) throw e3;
         idosos = (piRows || []).map(rowToIdoso);
         cartas = (cpRows || []).map(rowToCarta);
-        apns = (apRows || []).map(rowToApn);
         localStorage.setItem(STORAGE_IDOSOS, JSON.stringify(idosos));
         localStorage.setItem(STORAGE_CARTAS, JSON.stringify(cartas));
-        localStorage.setItem(STORAGE_APN, JSON.stringify(apns));
     } catch (e) {
-        console.error('Supabase init error, falling back to local storage', e);
+        console.error('Supabase init error', e);
         idosos = JSON.parse(localStorage.getItem(STORAGE_IDOSOS) || '[]');
         cartas = JSON.parse(localStorage.getItem(STORAGE_CARTAS) || '[]');
-        apns = JSON.parse(localStorage.getItem(STORAGE_APN) || '[]');
         showToast('Modo offline — sincronização indisponível', 'error');
+    }
+    try {
+        const { data: apRows, error: e3 } = await sb.from('tempo_apn').select('*');
+        if (e3) throw e3;
+        apns = (apRows || []).map(rowToApn);
+        localStorage.setItem(STORAGE_APN, JSON.stringify(apns));
+    } catch (e) {
+        console.warn('Tabela tempo_apn indisponível, usando localStorage', e);
+        apns = JSON.parse(localStorage.getItem(STORAGE_APN) || '[]');
     }
     nextIdosoId = idosos.length ? Math.max(...idosos.map(p => p.id)) + 1 : 1;
     nextCartaId = cartas.length ? Math.max(...cartas.map(c => c.id)) + 1 : 1;

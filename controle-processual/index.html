@@ -255,6 +255,126 @@
     </div>
 </section>
 
+<!-- ===== MÓDULO: TEMPO DE APN ===== -->
+<section id="view-apn" style="display:none">
+    <div class="stats-grid">
+        <div class="stat-card" onclick="filterApn('todos')"><div class="stat-label">Total</div><div class="stat-value" id="ap-total">0</div><div class="stat-hint">clique para ver todos</div></div>
+        <div class="stat-card urgente" onclick="filterApn('urgente')"><div class="stat-label">Tramitação &gt; 500 dias</div><div class="stat-value" id="ap-urgente">0</div><div class="stat-hint">clique para filtrar</div></div>
+        <div class="stat-card atencao" onclick="filterApn('atencao')"><div class="stat-label">Sem sentença</div><div class="stat-value" id="ap-sem-sentenca">0</div><div class="stat-hint">clique para filtrar</div></div>
+        <div class="stat-card" onclick="filterApn('julgados')"><div class="stat-label">Julgados</div><div class="stat-value" id="ap-julgados">0</div><div class="stat-hint">clique para filtrar</div></div>
+        <div class="stat-card" onclick="filterApn('arquivados')"><div class="stat-label">Suspensos/Arquivados</div><div class="stat-value" id="ap-arquivados">0</div><div class="stat-hint">clique para filtrar</div></div>
+    </div>
+    <div id="ap-alerta-banner" onclick="toggleAlertaApn()" style="display:none;align-items:center;gap:0.5rem;padding:0.65rem 1rem;border-radius:0.5rem;margin-bottom:0.75rem;cursor:pointer;font-size:0.875rem;font-weight:500;"></div>
+    <div class="toolbar">
+        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="ap-search" placeholder="Buscar por processo, fase, promotoria..."></div>
+        <select id="ap-filter-fase"><option value="">Todas as fases</option></select>
+        <select id="ap-filter-julgado">
+            <option value="">Julgado e não julgado</option>
+            <option value="sim">Julgado</option>
+            <option value="nao">Não julgado</option>
+        </select>
+        <button class="btn-new" onclick="openModalApn()"><i class="fas fa-plus"></i> Novo Processo</button>
+    </div>
+    <div class="table-wrapper">
+        <div class="table-info">
+            <span id="ap-count">Carregando...</span>
+            <span style="font-size:0.75rem;color:#aaa">Clique em uma linha para editar</span>
+        </div>
+        <div style="overflow-x:auto">
+        <table>
+            <thead>
+                <tr>
+                    <th class="no-sort">Situação</th>
+                    <th onclick="sortApn('tramitacao')">Tramitação <span id="sort-ap-tramitacao"></span></th>
+                    <th onclick="sortApn('processo')">Processo <span id="sort-ap-processo"></span></th>
+                    <th class="no-sort">Status</th>
+                    <th onclick="sortApn('data_distribuicao')">Distribuição <span id="sort-ap-data_distribuicao"></span></th>
+                    <th class="no-sort">Denúncia</th>
+                    <th class="no-sort">1ª Sentença</th>
+                    <th class="no-sort">Julgado</th>
+                    <th onclick="sortApn('fase_processual')">Fase <span id="sort-ap-fase_processual"></span></th>
+                    <th class="no-sort">Fila</th>
+                    <th class="no-sort">Pendências</th>
+                </tr>
+            </thead>
+            <tbody id="ap-table-body"></tbody>
+        </table>
+        </div>
+    </div>
+</section>
+
+<!-- MODAL: PROCESSO APN -->
+<div class="modal-overlay" id="modal-apn">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modal-apn-title">Novo Processo</h2>
+            <button class="btn-close" onclick="closeModalApn()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="ap-id">
+            <div class="form-grid">
+                <div class="form-group full">
+                    <label>Nº do Processo</label>
+                    <input type="text" id="ap-processo" placeholder="0000000-00.0000.8.04.0001">
+                </div>
+                <div class="form-group">
+                    <label>Data de Distribuição</label>
+                    <input type="date" id="ap-data-distribuicao">
+                </div>
+                <div class="form-group">
+                    <label>Data da Denúncia</label>
+                    <input type="date" id="ap-denuncia">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="ap-status" onchange="handleApnNovaOpcao(this, loadApnStatus, saveApnStatus, 'Status')"></select>
+                </div>
+                <div class="form-group">
+                    <label>Fase Processual</label>
+                    <select id="ap-fase" onchange="handleApnNovaOpcao(this, loadApnFases, saveApnFases, 'Fase Processual')"></select>
+                </div>
+                <div class="form-group">
+                    <label>Fila Processual</label>
+                    <select id="ap-localizacao" onchange="handleApnNovaOpcao(this, loadApnFilas, saveApnFilas, 'Fila Processual')"></select>
+                </div>
+                <div class="form-group">
+                    <label>Promotoria</label>
+                    <select id="ap-mp">
+                        <option value="">Selecione...</option>
+                        <option value="04ª PJ">04ª PJ</option>
+                        <option value="92ª PJ">92ª PJ</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Defesa</label>
+                    <div class="form-checks">
+                        <label class="form-check"><input type="checkbox" id="ap-defesa-dpe"> DPE</label>
+                        <label class="form-check"><input type="checkbox" id="ap-defesa-adv"> ADV</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Situação</label>
+                    <div class="form-checks">
+                        <label class="form-check"><input type="checkbox" id="ap-sentenca"> 1ª Sentença</label>
+                        <label class="form-check"><input type="checkbox" id="ap-julgado"> Julgado</label>
+                    </div>
+                </div>
+                <div class="form-group full">
+                    <label>Pendências / Anotações</label>
+                    <textarea id="ap-pendencias" rows="3"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-del" id="ap-del-btn" onclick="deleteApn()"><i class="fas fa-trash"></i> Excluir</button>
+            <div style="display:flex;gap:0.75rem">
+                <button class="btn-cancel-modal" onclick="closeModalApn()">Cancelar</button>
+                <button class="btn-save" onclick="saveApn()"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL: PROCESSO IDOSO -->
 <div class="modal-overlay" id="modal-idoso">
     <div class="modal">
@@ -941,7 +1061,16 @@ function renderAlertaApn() {
         if (apFilterAlerta) apFilterAlerta = false;
     }
 }
+function buildApnFaseFilter() {
+    const sel = document.getElementById('ap-filter-fase');
+    const current = sel.value;
+    const fases = [...new Set(apns.map(p => p.faseProcessual).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">Todas as fases</option>' +
+        fases.map(f => `<option value="${f}">${f}</option>`).join('');
+    sel.value = current;
+}
 function renderApn() {
+    buildApnFaseFilter();
     renderAlertaApn();
     const list = getFilteredApn();
     document.getElementById('ap-total').textContent = apns.length;

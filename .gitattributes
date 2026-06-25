@@ -1,0 +1,5 @@
+# Protege arquivos críticos de serem sobrescritos por merges de outros módulos.
+# merge=ours = durante merge, preserva a versão do branch que está recebendo (main).
+# Isso impede que PRs do módulo audiências sobrescrevam código do controle-processual.
+controle-processual/index.html merge=ours
+.github/workflows/*.yml merge=ours

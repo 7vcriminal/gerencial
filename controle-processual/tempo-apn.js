@@ -153,17 +153,16 @@
     }
 
     // === INICIALIZAÇÃO AUTÔNOMA via onAuthStateChange ===
-    // Usa listener próprio em vez de monkey-patch para evitar race condition com F5
-    let _apnInitialized = false;
+    // Captura logins novos; o F5 é tratado pelo _apnBoot no final do arquivo
     if (typeof sb !== 'undefined') {
         sb.auth.onAuthStateChange(async (event, session) => {
-            if (session && !_apnInitialized) {
-                _apnInitialized = true;
+            if (event === 'SIGNED_IN' && session && !window._apnInitialized) {
+                window._apnInitialized = true;
                 await window.__apnInit();
                 window.__apnSubscribe();
             }
-            if (!session) {
-                _apnInitialized = false;
+            if (event === 'SIGNED_OUT') {
+                window._apnInitialized = false;
             }
         });
     }
@@ -505,3 +504,19 @@ async function deleteApn() {
     await removeApn(id);
     showToast('Processo excluído');
 }
+
+// === BOOT AUTÔNOMO ===
+// Verifica sessão ativa imediatamente (resolve problema de F5 onde
+// onAuthStateChange INITIAL_SESSION já foi disparado antes deste arquivo carregar)
+(async function _apnBoot() {
+    try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session && !window._apnInitialized) {
+            window._apnInitialized = true;
+            await window.__apnInit();
+            window.__apnSubscribe();
+        }
+    } catch (e) {
+        console.warn('APN boot error', e);
+    }
+}());

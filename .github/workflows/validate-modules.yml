@@ -1,0 +1,36 @@
+name: Valida integridade dos módulos
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'controle-processual/index.html'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'controle-processual/index.html'
+
+jobs:
+  check-controle-processual:
+    runs-on: ubuntu-latest
+    name: Verifica módulos em controle-processual/index.html
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Módulo Processos Idosos presente
+        run: grep -q 'id="view-idosos"' controle-processual/index.html
+
+      - name: Módulo Cartas Precatórias presente
+        run: grep -q 'id="view-cartas"' controle-processual/index.html
+
+      - name: Módulo Tempo de APN — tab presente
+        run: grep -q 'id="tab-apn"' controle-processual/index.html
+
+      - name: Módulo Tempo de APN — seção HTML presente
+        run: grep -q 'id="view-apn"' controle-processual/index.html
+
+      - name: Módulo Tempo de APN — variáveis JS presentes
+        run: grep -q 'STORAGE_APN' controle-processual/index.html
+
+      - name: Módulo Tempo de APN — funções JS presentes
+        run: grep -q 'renderApn\|persistApn\|openModalApn' controle-processual/index.html

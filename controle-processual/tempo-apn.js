@@ -283,7 +283,7 @@ function getFilteredApn() {
     if (julgadoF === 'nao') list = list.filter(p => !p.julgado);
     if (apFilterAlerta) list = list.filter(p => p._diasMov != null && p._diasMov >= 15);
     if (apCardFilter === 'pendentes') list = list.filter(p => p.status !== 'Suspenso' && p.status !== 'Arquivado');
-    if (apCardFilter === 'urgente') list = list.filter(p => p._dias != null && p._dias > 500);
+    if (apCardFilter === 'urgente') list = list.filter(p => p.status === 'Ativo' && !p.primeiraSentenca && p._dias != null && p._dias > 500);
     if (apCardFilter === 'atencao') list = list.filter(p => !p.primeiraSentenca);
     if (apCardFilter === 'julgados') list = list.filter(p => p.julgado);
     if (apCardFilter === 'arquivados') list = list.filter(p => p.status === 'Suspenso' || p.status === 'Arquivado');
@@ -334,7 +334,9 @@ function renderApn() {
     const elTotal = document.getElementById('ap-total');
     if (!elTotal) return;
     document.getElementById('ap-total').textContent = apns.length;
-    document.getElementById('ap-urgente').textContent = apns.filter(p => (tramitacaoApn(p) || 0) > 500).length;
+    document.getElementById('ap-urgente').textContent = apns.filter(p =>
+        p.status === 'Ativo' && !p.primeiraSentenca && (tramitacaoApn(p) || 0) > 500
+    ).length;
     document.getElementById('ap-sem-sentenca').textContent = apns.filter(p => !p.primeiraSentenca).length;
     document.getElementById('ap-julgados').textContent = apns.filter(p => p.julgado).length;
     document.getElementById('ap-arquivados').textContent = apns.filter(p => p.status === 'Suspenso' || p.status === 'Arquivado').length;

@@ -731,7 +731,10 @@
                     <div class="reus-list" id="f-reus-list"></div>
                 </div>
                 <div class="form-group">
-                    <label>Magistrado</label>
+                    <label style="display:flex;justify-content:space-between;align-items:center">
+                        <span>Magistrado</span>
+                        <button type="button" onclick="replicarMagistradoDia()" title="Aplicar este magistrado a todos os horários do mesmo dia" style="font-size:0.72rem;padding:0.2rem 0.55rem;border-radius:6px;border:1px solid #fcd9a8;background:#fff4e5;color:#c2540a;font-weight:700;cursor:pointer"><i class="fas fa-clone"></i> Replicar para o dia</button>
+                    </label>
                     <select id="f-magistrado"></select>
                 </div>
                 <div class="form-group">
@@ -1911,6 +1914,19 @@ function openModal(id, force) {
     document.querySelector('#form-modal .modal').scrollTop = 0;
 }
 function closeModal() { document.getElementById('form-modal').classList.remove('open'); }
+
+async function replicarMagistradoDia() {
+    const magistrado = document.getElementById('f-magistrado').value;
+    if (!magistrado) { showToast('Selecione um magistrado antes de replicar.', 'error'); return; }
+    const data = document.getElementById('f-data').value;
+    if (!data) { showToast('Este registro não tem data — não é possível replicar.', 'error'); return; }
+    const alvo = audiencias.filter(a => a.data === data);
+    if (!confirm(`Aplicar "${magistrado}" a todos os ${alvo.length} horário(s) do dia ${fmtData(data)}?`)) return;
+    alvo.forEach(a => { a.magistrado = magistrado; });
+    await saveData(alvo);
+    render();
+    showToast(`Magistrado aplicado a ${alvo.length} audiência(s) do dia ${fmtData(data)}.`, 'success');
+}
 
 function saveAudiencia() {
     const id  = parseInt(document.getElementById('edit-id').value);

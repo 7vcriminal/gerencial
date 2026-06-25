@@ -1272,12 +1272,16 @@ function getFiltered() {
             if (!(a.status||'').toLowerCase().includes('redesig')) return false;
         } else if (activeCard === 'pendente') {
             if (a.status) return false;
+            if (!a.processo || a.reservado || !a.data || !a.hora) return false;
         } else if (activeCard === 'cancelada') {
             if (!(a.status||'').toLowerCase().includes('cancel')) return false;
         } else if (activeCard === 'preso') {
             if (!a.reuPreso) return false;
+            if (!a.processo || a.reservado || !a.data || !a.hora) return false;
+        } else if (activeCard === 'total') {
+            if (!a.processo || a.reservado || !a.data || !a.hora) return false;
         } else if (activeCard === 'slot') {
-            if (a.processo) return false;
+            if (a.processo && !a.reservado) return false;
         }
         // dropdown filters
         if (filterStatus) {
@@ -1326,7 +1330,7 @@ function countStats(data) {
         pendente:  data.filter(a => !a.status && a.processo && !a.reservado && a.data && a.hora).length,
         cancelada: data.filter(a => (a.status||'').toLowerCase().includes('cancel')).length,
         preso:     data.filter(a => a.reuPreso && a.processo && !a.reservado && a.data && a.hora).length,
-        slot:      data.filter(a => !a.processo).length,
+        slot:      data.filter(a => !a.processo || a.reservado).length,
     };
 }
 function isSlot(a) { return !a.processo; }

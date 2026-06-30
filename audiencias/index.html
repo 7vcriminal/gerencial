@@ -2276,7 +2276,7 @@ function _imprimirRelatorioPDF(anos, opts) {
 
 // ─── EXPORTAR PDF ────────────────────────────────────────────────────────────
 
-function gerarPDF() {
+async function gerarPDF() {
     const filtered = getFiltered();
     if (!filtered.length) { showToast('Nenhuma audiência para exportar', 'error'); return; }
 
@@ -2311,15 +2311,20 @@ function gerarPDF() {
     </div>`;
     document.body.appendChild(overlay);
     document.getElementById('pdf-cancel').onclick = () => overlay.remove();
-    document.getElementById('pdf-confirm').onclick = () => {
+    document.getElementById('pdf-confirm').onclick = async () => {
         const cols = colOpts.map(c => ({...c, on: document.getElementById(c.id).checked}));
         overlay.remove();
-        _imprimirPDF(filtered, cols);
+        const { data: { user } } = await sb.auth.getUser();
+        const nomeUsuario = (user?.user_metadata?.full_name) || (user?.email ? user.email.split('@')[0] : 'Usuário');
+        _imprimirPDF(filtered, cols, nomeUsuario);
     };
 }
 
-function _imprimirPDF(filtered, cols) {
+function _imprimirPDF(filtered, cols, nomeUsuario) {
     const show = id => cols.find(c=>c.id===id)?.on;
+    const agora = new Date();
+    const dataHora = agora.toLocaleDateString('pt-BR') + ' às ' + agora.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    const usuario = nomeUsuario || 'Usuário';
 
     const descFiltros = [];
     if (currentAno !== 'Historico') descFiltros.push(`Ano: ${currentAno}`);
@@ -2355,7 +2360,7 @@ function _imprimirPDF(filtered, cols) {
 <title>Audiências - Relatório</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #1a1a1a; padding: 20px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #1a1a1a; padding: 20px; padding-top: 48px; padding-bottom: 36px; }
     .cabecalho { border-bottom: 3px solid #1a2a6c; padding-bottom: 10px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; }
     .cab-titulo h1 { font-size: 16px; color: #1a2a6c; font-weight: 700; }
     .cab-titulo p { font-size: 11px; color: #666; margin-top: 2px; }
@@ -2373,22 +2378,49 @@ function _imprimirPDF(filtered, cols) {
     tbody tr.preso:nth-child(even) { background: #ffe8e8; }
     td { padding: 5px 7px; vertical-align: top; font-family: inherit; }
     td.center { text-align: center; }
-    .rodape { margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 8px; font-size: 9px; color: #999; display: flex; justify-content: space-between; }
+    /* cabeçalho e rodapé fixos por página */
+    .pg-header { display: none; }
+    .pg-footer { display: none; }
     @media print {
-        body { padding: 10px; }
+        body { padding: 10px; padding-top: 44px; padding-bottom: 32px; }
         @page { margin: 15mm; size: A4 landscape; }
         thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         tbody tr.preso { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .pg-header {
+            display: block;
+            position: fixed; top: 0; left: 0; right: 0;
+            background: #1a2a6c; color: white;
+            font-size: 9px; padding: 4px 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        }
+        .pg-footer {
+            display: block;
+            position: fixed; bottom: 0; left: 0; right: 0;
+            border-top: 1px solid #e2e8f0;
+            font-size: 9px; color: #888; padding: 4px 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: white;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        }
     }
 </style></head><body>
+<div class="pg-header">
+    <span>Pauta de Audiências · 7ª Vara Criminal · TJAM</span>
+    <span>Gerado por: <strong>${usuario}</strong> &nbsp;·&nbsp; ${dataHora}</span>
+</div>
+<div class="pg-footer">
+    <span>7ª Vara Criminal · TJAM · Sistema de Gestão de Audiências</span>
+    <span>Documento gerado por: <strong>${usuario}</strong> &nbsp;·&nbsp; ${dataHora}</span>
+</div>
 <div class="cabecalho">
     <div class="cab-titulo">
         <h1>Pauta de Audiências · 7ª Vara Criminal</h1>
         <p>Comarca de Manaus · Tribunal de Justiça do Amazonas</p>
     </div>
     <div class="cab-meta">
-        Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}<br>
-        Total de registros: <strong>${filtered.length}</strong>
+        Gerado por: <strong>${usuario}</strong><br>
+        ${dataHora} &nbsp;·&nbsp; Total de registros: <strong>${filtered.length}</strong>
     </div>
 </div>
 ${descFiltros.length ? `<div class="filtros"><strong>Filtros aplicados:</strong> ${descFiltros.join(' · ')}</div>` : ''}
@@ -2403,10 +2435,6 @@ ${descFiltros.length ? `<div class="filtros"><strong>Filtros aplicados:</strong>
     <thead><tr>${th('col-data')}${th('col-hora')}${th('col-reu')}${th('col-processo')}${th('col-magistrado')}${th('col-promotor')}${th('col-status')}${th('col-proj')}${th('col-intm')}${th('col-termo')}${th('col-pendencias')}</tr></thead>
     <tbody>${linhas}</tbody>
 </table>
-<div class="rodape">
-    <span>7ª Vara Criminal · TJAM · Sistema de Gestão de Audiências</span>
-    <span>Documento gerado automaticamente · ${new Date().toLocaleDateString('pt-BR')}</span>
-</div>
 </body></html>`;
 
     const w = window.open('', '_blank');

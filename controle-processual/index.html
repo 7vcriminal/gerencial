@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Processual - 7ª Vara Criminal</title>
+    <link rel="icon" type="image/png" href="../logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a2a6c; --secondary: #b21f1f; --bg: #f4f7f9;
+            --text: #2d3748; --muted: #718096; --card-bg: #ffffff;
+            --radius: 12px; --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            --green: #27ae60; --yellow: #f39c12; --red: #e74c3c;
+            --blue: #2980b9; --gray: #95a5a6;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 1.5rem; max-width: 1600px; margin: 0 auto; }
+
+        /* HEADER */
+        .header { position: relative; background: var(--card-bg); padding: 1.25rem 2rem; border-radius: var(--radius); margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); border-top: 4px solid var(--primary); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo-header { max-height: 40px; }
+        .header h1 { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+        .header p { font-size: 0.85rem; color: var(--muted); }
+        .header-back { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--muted); font-size: 0.85rem; font-weight: 600; padding: 0.4rem 0.9rem; border-radius: 50px; border: 1px solid #e2e8f0; transition: var(--transition); }
+        .header-back:hover { background: var(--primary); color: white; border-color: var(--primary); }
+        .header-actions { display: flex; align-items: center; gap: 0.6rem; margin-left: auto; }
+        .btn-logout { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.9rem; border-radius: 50px; border: 1px solid #e2e8f0; background: white; color: var(--muted); font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .btn-logout:hover { background: var(--secondary); color: white; border-color: var(--secondary); }
+
+        /* TABS */
+        .module-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .module-tab { padding: 0.6rem 1.3rem; border-radius: 50px; border: 1px solid #e2e8f0; background: white; font-family: inherit; font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; }
+        .module-tab:hover { border-color: var(--primary); color: var(--primary); }
+        .module-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* STATS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card { background: var(--card-bg); border-radius: var(--radius); padding: 1rem 1.25rem; box-shadow: var(--shadow-sm); border-left: 4px solid var(--gray); display: flex; flex-direction: column; gap: 0.2rem; cursor: pointer; transition: var(--transition); user-select: none; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .stat-card.active { outline: 2px solid var(--primary); }
+        .stat-label { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+        .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--text); }
+        .stat-hint { font-size: 0.7rem; color: #aaa; }
+        .stat-card.urgente { border-color: var(--red); }
+        .stat-card.urgente .stat-value { color: var(--red); }
+        .stat-card.atencao { border-color: var(--yellow); }
+        .stat-card.atencao .stat-value { color: var(--yellow); }
+
+        /* TOOLBAR */
+        .toolbar { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+        .search-box { flex: 1; min-width: 220px; position: relative; }
+        .search-box i { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.85rem; }
+        .search-box input { width: 100%; padding: 0.6rem 0.9rem 0.6rem 2.2rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 0.88rem; }
+        select, .filter-btn { padding: 0.6rem 0.9rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 0.85rem; background: white; color: var(--text); cursor: pointer; }
+        .filter-btn { font-weight: 600; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; transition: var(--transition); }
+        .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn-new { margin-left: auto; padding: 0.6rem 1.1rem; border: none; border-radius: 8px; background: var(--primary); color: white; font-family: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: var(--transition); }
+        .btn-new:hover { background: #142156; }
+
+        /* TABLE */
+        .table-wrapper { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
+        .table-info { padding: 0.75rem 1.25rem; font-size: 0.8rem; color: var(--muted); border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.4rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { text-align: left; padding: 0.75rem 1rem; background: #f8fafc; color: var(--muted); font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.4px; cursor: pointer; white-space: nowrap; border-bottom: 1px solid #e2e8f0; }
+        th:hover { color: var(--primary); }
+        th.no-sort { cursor: default; }
+        th.no-sort:hover { color: var(--muted); }
+        td { padding: 0.7rem 1rem; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+        tbody tr { cursor: pointer; transition: background 0.15s; }
+        tbody tr:hover { background: #f8fafc; }
+        .proc-num { font-family: monospace; font-weight: 600; }
+        .badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; }
+        .badge-sim { background: #d4f7e0; color: #1d7a3e; }
+        .badge-nao { background: #fde8e8; color: #b91c1c; }
+        .badge-prioridade { background: #fff3cd; color: #92400e; }
+        .dias-pill { font-weight: 700; }
+        .dias-ok { color: var(--green); }
+        .dias-atencao { color: var(--yellow); }
+        .dias-urgente { color: var(--red); }
+        .pendencia-preview { color: var(--muted); font-size: 0.8rem; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
+
+        /* MODAL */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: white; border-radius: var(--radius); width: 100%; max-width: 560px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-md); }
+        .modal-header { padding: 1.1rem 1.5rem; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h2 { font-size: 1.1rem; color: var(--primary); }
+        .btn-close { background: none; border: none; font-size: 1.1rem; color: var(--muted); cursor: pointer; }
+        .modal-body { padding: 1.25rem 1.5rem; overflow-y: auto; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+        .form-group.full { grid-column: 1 / -1; }
+        .form-group label { font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+        .form-group input, .form-group select, .form-group textarea { padding: 0.6rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 0.9rem; }
+        .form-group textarea { resize: vertical; }
+        .form-checks { display: flex; gap: 1.2rem; flex-wrap: wrap; }
+        .form-check { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+        .resp-list { display: flex; flex-direction: column; gap: 0.4rem; }
+        .resp-row { display: flex; gap: 0.5rem; }
+        .resp-row input { flex: 1; }
+        .resp-row button { border: none; background: #fde8e8; color: var(--red); border-radius: 6px; padding: 0 0.7rem; cursor: pointer; }
+        .btn-add-resp { align-self: flex-start; border: 1px dashed var(--primary); background: white; color: var(--primary); border-radius: 8px; padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; margin-top: 0.4rem; }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .btn-del { background: #fde8e8; color: var(--red); border: none; border-radius: 8px; padding: 0.6rem 1.1rem; font-weight: 700; cursor: pointer; font-size: 0.85rem; }
+        .btn-cancel-modal { background: none; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.6rem 1.1rem; font-weight: 600; cursor: pointer; color: var(--muted); font-size: 0.85rem; }
+        .btn-save { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 0.6rem 1.3rem; font-weight: 700; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; }
+
+        .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--text); color: white; padding: 0.8rem 1.3rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; box-shadow: var(--shadow-md); z-index: 3000; opacity: 0; transform: translateY(10px); transition: var(--transition); pointer-events: none; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.error { background: var(--red); }
+
+        @media (max-width: 700px) {
+            body { padding: 0.75rem; }
+            .form-grid { grid-template-columns: 1fr; }
+            table { font-size: 0.78rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- AUTH OVERLAY -->
+<div id="auth-overlay" style="position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a2a6c,#2980b9);padding:1rem;">
+    <div style="background:#ffffff;border-radius:12px;width:100%;max-width:380px;padding:2rem 1.75rem;box-shadow:0 10px 15px -3px rgba(0,0,0,0.2);">
+        <div style="text-align:center;margin-bottom:1.5rem;">
+            <img src="../logo.png" alt="TJAM" style="max-height:48px;margin-bottom:0.75rem;" onerror="this.style.display='none'">
+            <h1 style="font-size:1.2rem;font-weight:700;color:#1a2a6c;"><i class="fas fa-scale-balanced"></i> Controle Processual · 7ª Vara Criminal</h1>
+            <p style="font-size:0.82rem;color:#718096;margin-top:0.25rem;">Faça login para continuar</p>
+        </div>
+        <div id="auth-error" style="display:none;background:#fdecea;color:#e74c3c;border-radius:8px;padding:0.6rem 0.9rem;font-size:0.82rem;font-weight:600;margin-bottom:1rem;"></div>
+        <div style="display:flex;flex-direction:column;gap:0.85rem;">
+            <div style="display:flex;flex-direction:column;gap:0.3rem;">
+                <label style="font-size:0.72rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:0.4px;">E-mail</label>
+                <input type="email" id="auth-email" placeholder="seu@email.com" style="padding:0.6rem 0.75rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.9rem;">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.3rem;">
+                <label style="font-size:0.72rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:0.4px;">Senha</label>
+                <input type="password" id="auth-password" placeholder="••••••••" style="padding:0.6rem 0.75rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.9rem;" onkeydown="if(event.key==='Enter')authSignIn()">
+            </div>
+            <button onclick="authSignIn()" style="padding:0.65rem 1rem;border-radius:8px;border:none;background:#1a2a6c;color:white;font-family:inherit;font-size:0.92rem;font-weight:700;cursor:pointer;">Entrar</button>
+            <button onclick="authSignUp()" style="padding:0.6rem 1rem;border-radius:8px;border:1px dashed #1a2a6c;background:white;color:#1a2a6c;font-family:inherit;font-size:0.85rem;font-weight:600;cursor:pointer;">Criar Conta</button>
+        </div>
+    </div>
+</div>
+
+<div id="app-content" style="display:none">
+
+<header class="header">
+    <div class="header-left">
+        <img src="../logo.png" alt="TJAM" class="logo-header" onerror="this.style.display='none'">
+        <div>
+            <h1><i class="fas fa-scale-balanced"></i> Controle Processual</h1>
+            <p>7ª Vara Criminal da Comarca de Manaus · TJAM</p>
+        </div>
+    </div>
+    <div class="header-actions">
+        <a href="../" class="header-back"><i class="fas fa-arrow-left"></i> Central de Gestão</a>
+        <button class="btn-logout" onclick="authSignOut()" title="Sair"><i class="fas fa-right-from-bracket"></i> Sair</button>
+    </div>
+</header>
+
+<div class="module-tabs">
+    <button class="module-tab active" id="tab-idosos" onclick="setModule('idosos')"><i class="fas fa-hourglass-half"></i> Processos Idosos</button>
+    <button class="module-tab" id="tab-cartas" onclick="setModule('cartas')"><i class="fas fa-envelope-open-text"></i> Cartas Precatórias</button>
+</div>
+
+<!-- ===== MÓDULO: PROCESSOS IDOSOS ===== -->
+<section id="view-idosos">
+    <div class="stats-grid">
+        <div class="stat-card" onclick="filterIdosos('todos')"><div class="stat-label">Total</div><div class="stat-value" id="pi-total">0</div><div class="stat-hint">clique para ver todos</div></div>
+        <div class="stat-card urgente" onclick="filterIdosos('urgente')"><div class="stat-label">Tramitação &gt; 365 dias</div><div class="stat-value" id="pi-urgente">0</div><div class="stat-hint">clique para filtrar</div></div>
+        <div class="stat-card atencao" onclick="filterIdosos('atencao')"><div class="stat-label">Sem sentença</div><div class="stat-value" id="pi-sem-sentenca">0</div><div class="stat-hint">clique para filtrar</div></div>
+        <div class="stat-card" onclick="filterIdosos('julgados')"><div class="stat-label">Julgados</div><div class="stat-value" id="pi-julgados">0</div><div class="stat-hint">clique para filtrar</div></div>
+    </div>
+    <div class="toolbar">
+        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="pi-search" placeholder="Buscar por processo, fase, promotoria..."></div>
+        <select id="pi-filter-fase"><option value="">Todas as fases</option></select>
+        <select id="pi-filter-julgado">
+            <option value="">Julgado e não julgado</option>
+            <option value="sim">Julgado</option>
+            <option value="nao">Não julgado</option>
+        </select>
+        <button class="btn-new" onclick="openModalIdoso()"><i class="fas fa-plus"></i> Novo Processo</button>
+    </div>
+    <div class="table-wrapper">
+        <div class="table-info">
+            <span id="pi-count">Carregando...</span>
+            <span style="font-size:0.75rem;color:#aaa">Clique em uma linha para editar</span>
+        </div>
+        <div style="overflow-x:auto">
+        <table>
+            <thead>
+                <tr>
+                    <th onclick="sortIdosos('tramitacao')">Tramitação <span id="sort-pi-tramitacao"></span></th>
+                    <th onclick="sortIdosos('processo')">Processo <span id="sort-pi-processo"></span></th>
+                    <th onclick="sortIdosos('data_distribuicao')">Distribuição <span id="sort-pi-data_distribuicao"></span></th>
+                    <th class="no-sort">Denúncia</th>
+                    <th class="no-sort">1ª Sentença</th>
+                    <th class="no-sort">Julgado</th>
+                    <th onclick="sortIdosos('fase_processual')">Fase <span id="sort-pi-fase_processual"></span></th>
+                    <th class="no-sort">MP</th>
+                    <th class="no-sort">DPE/Adv</th>
+                    <th class="no-sort">Pendências</th>
+                </tr>
+            </thead>
+            <tbody id="pi-table-body"></tbody>
+        </table>
+        </div>
+    </div>
+</section>
+
+<!-- ===== MÓDULO: CARTAS PRECATÓRIAS ===== -->
+<section id="view-cartas" style="display:none">
+    <div class="stats-grid">
+        <div class="stat-card" onclick="filterCartas('todos')"><div class="stat-label">Total</div><div class="stat-value" id="cp-total">0</div><div class="stat-hint">clique para ver todas</div></div>
+        <div class="stat-card urgente" onclick="filterCartas('prioridade')"><div class="stat-label">Prioritárias</div><div class="stat-value" id="cp-prioridade">0</div><div class="stat-hint">clique para filtrar</div></div>
+        <div class="stat-card atencao" onclick="filterCartas('atencao')"><div class="stat-label">Tramitação &gt; 180 dias</div><div class="stat-value" id="cp-atencao">0</div><div class="stat-hint">clique para filtrar</div></div>
+    </div>
+    <div class="toolbar">
+        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="cp-search" placeholder="Buscar por processo, finalidade, responsável..."></div>
+        <button class="filter-btn" id="cp-prioridade-btn" onclick="togglePrioridadeFilter()"><i class="fas fa-star"></i> Só Prioritárias</button>
+        <button class="btn-new" onclick="openModalCarta()"><i class="fas fa-plus"></i> Nova Carta</button>
+    </div>
+    <div class="table-wrapper">
+        <div class="table-info">
+            <span id="cp-count">Carregando...</span>
+            <span style="font-size:0.75rem;color:#aaa">Clique em uma linha para editar</span>
+        </div>
+        <div style="overflow-x:auto">
+        <table>
+            <thead>
+                <tr>
+                    <th onclick="sortCartas('tramitacao')">Tramitação <span id="sort-cp-tramitacao"></span></th>
+                    <th onclick="sortCartas('processo')">Processo <span id="sort-cp-processo"></span></th>
+                    <th onclick="sortCartas('recebimento')">Recebimento <span id="sort-cp-recebimento"></span></th>
+                    <th class="no-sort">Finalidade</th>
+                    <th class="no-sort">1ª Sentença</th>
+                    <th class="no-sort">Localizador</th>
+                    <th class="no-sort">Responsável(is)</th>
+                    <th class="no-sort">Prioridade</th>
+                    <th class="no-sort">Pendências</th>
+                </tr>
+            </thead>
+            <tbody id="cp-table-body"></tbody>
+        </table>
+        </div>
+    </div>
+</section>
+
+<!-- MODAL: PROCESSO IDOSO -->
+<div class="modal-overlay" id="modal-idoso">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modal-idoso-title">Novo Processo</h2>
+            <button class="btn-close" onclick="closeModalIdoso()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="pi-id">
+            <div class="form-grid">
+                <div class="form-group full">
+                    <label>Nº do Processo</label>
+                    <input type="text" id="pi-processo" placeholder="0000000-00.0000.8.04.0001">
+                </div>
+                <div class="form-group">
+                    <label>Data de Distribuição</label>
+                    <input type="date" id="pi-data-distribuicao">
+                </div>
+                <div class="form-group">
+                    <label>Data da Denúncia</label>
+                    <input type="date" id="pi-denuncia">
+                </div>
+                <div class="form-group">
+                    <label>Fase Processual</label>
+                    <input type="text" id="pi-fase" placeholder="Citação, Resposta à Acusação, Instrução...">
+                </div>
+                <div class="form-group">
+                    <label>Localização</label>
+                    <input type="text" id="pi-localizacao">
+                </div>
+                <div class="form-group">
+                    <label>MP / Vara de Origem</label>
+                    <input type="text" id="pi-mp">
+                </div>
+                <div class="form-group">
+                    <label>DPE / Advogado</label>
+                    <input type="text" id="pi-defesa">
+                </div>
+                <div class="form-group">
+                    <label>Situação</label>
+                    <div class="form-checks">
+                        <label class="form-check"><input type="checkbox" id="pi-sentenca"> 1ª Sentença</label>
+                        <label class="form-check"><input type="checkbox" id="pi-julgado"> Julgado</label>
+                    </div>
+                </div>
+                <div class="form-group full">
+                    <label>Pendências / Anotações</label>
+                    <textarea id="pi-pendencias" rows="3"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-del" id="pi-del-btn" onclick="deleteIdoso()"><i class="fas fa-trash"></i> Excluir</button>
+            <div style="display:flex;gap:0.75rem">
+                <button class="btn-cancel-modal" onclick="closeModalIdoso()">Cancelar</button>
+                <button class="btn-save" onclick="saveIdoso()"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: CARTA PRECATÓRIA -->
+<div class="modal-overlay" id="modal-carta">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modal-carta-title">Nova Carta Precatória</h2>
+            <button class="btn-close" onclick="closeModalCarta()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="cp-id">
+            <div class="form-grid">
+                <div class="form-group full">
+                    <label>Nº do Processo</label>
+                    <input type="text" id="cp-processo" placeholder="0000000-00.0000.8.04.0001">
+                </div>
+                <div class="form-group">
+                    <label>Recebimento</label>
+                    <input type="date" id="cp-recebimento">
+                </div>
+                <div class="form-group">
+                    <label>Finalidade</label>
+                    <input type="text" id="cp-finalidade" placeholder="Intimação, Acompanhamento...">
+                </div>
+                <div class="form-group full">
+                    <label>Localizador / Localização</label>
+                    <input type="text" id="cp-localizador">
+                </div>
+                <div class="form-group full">
+                    <label style="display:flex;justify-content:space-between;align-items:center">
+                        <span>Responsável(is)</span>
+                    </label>
+                    <div class="resp-list" id="cp-resp-list"></div>
+                    <button type="button" class="btn-add-resp" onclick="addRespRow()"><i class="fas fa-plus"></i> Adicionar responsável</button>
+                </div>
+                <div class="form-group">
+                    <label>Situação</label>
+                    <div class="form-checks">
+                        <label class="form-check"><input type="checkbox" id="cp-sentenca"> 1ª Sentença</label>
+                        <label class="form-check"><input type="checkbox" id="cp-prioridade"> Prioridade</label>
+                    </div>
+                </div>
+                <div class="form-group full">
+                    <label>Pendências / Anotações</label>
+                    <textarea id="cp-pendencias" rows="3"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-del" id="cp-del-btn" onclick="deleteCarta()"><i class="fas fa-trash"></i> Excluir</button>
+            <div style="display:flex;gap:0.75rem">
+                <button class="btn-cancel-modal" onclick="closeModalCarta()">Cancelar</button>
+                <button class="btn-save" onclick="saveCarta()"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+</div><!-- /app-content -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ─── DATA LAYER (Supabase) ────────────────────────────────────────────────
+const SUPABASE_URL = 'https://qcvietuczbysditpkopr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjdmlldHVjemJ5c2RpdHBrb3ByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MjkzMjIsImV4cCI6MjA5NzIwNTMyMn0.HcQ5AAwaM9WP9MAm3KSO5LtJKhUzTIRkpaIGeW2n_os';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const STORAGE_IDOSOS = 'controleProcessual_idosos_v1';
+const STORAGE_CARTAS = 'controleProcessual_cartas_v1';
+
+let idosos = [];
+let cartas = [];
+let nextIdosoId = 1;
+let nextCartaId = 1;
+let currentModule = 'idosos';
+let piSort = { field: 'tramitacao', dir: 'desc' };
+let cpSort = { field: 'tramitacao', dir: 'desc' };
+let piCardFilter = 'todos';
+let cpCardFilter = 'todos';
+let cpOnlyPrioridade = false;
+
+// ─── AUTH ──────────────────────────────────────────────────────────────────
+function showAuthError(msg) {
+    const el = document.getElementById('auth-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+}
+function hideAuthError() {
+    const el = document.getElementById('auth-error');
+    el.style.display = 'none';
+    el.textContent = '';
+}
+function traduzErroAuth(msg) {
+    if (!msg) return 'Ocorreu um erro. Tente novamente.';
+    const m = msg.toLowerCase();
+    if (m.includes('invalid login credentials')) return 'E-mail ou senha inválidos.';
+    if (m.includes('email not confirmed')) return 'E-mail ainda não confirmado. Verifique sua caixa de entrada.';
+    if (m.includes('user already registered') || m.includes('already registered')) return 'Este e-mail já está cadastrado.';
+    if (m.includes('password should be at least')) return 'A senha deve ter pelo menos 6 caracteres.';
+    if (m.includes('unable to validate email') || m.includes('invalid email')) return 'E-mail inválido.';
+    if (m.includes('rate limit')) return 'Muitas tentativas. Aguarde um momento e tente novamente.';
+    if (m.includes('network')) return 'Erro de conexão. Verifique sua internet.';
+    return msg;
+}
+async function authSignIn() {
+    hideAuthError();
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    if (!email || !password) { showAuthError('Informe e-mail e senha.'); return; }
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) showAuthError(traduzErroAuth(error.message));
+}
+async function authSignUp() {
+    hideAuthError();
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    if (!email || !password) { showAuthError('Informe e-mail e senha.'); return; }
+    const { error } = await sb.auth.signUp({ email, password });
+    if (error) { showAuthError(traduzErroAuth(error.message)); return; }
+    showAuthError('Conta criada! Verifique seu e-mail para confirmar (se exigido) ou faça login.');
+}
+async function authSignOut() { await sb.auth.signOut(); }
+
+sb.auth.onAuthStateChange((event, session) => {
+    const overlay = document.getElementById('auth-overlay');
+    const appContent = document.getElementById('app-content');
+    if (session) {
+        overlay.style.display = 'none';
+        appContent.style.display = '';
+        if (!window.__appInitialized) {
+            window.__appInitialized = true;
+            initApp();
+        }
+    } else {
+        overlay.style.display = 'flex';
+        appContent.style.display = 'none';
+    }
+});
+
+// ─── MAPEAMENTO SUPABASE ────────────────────────────────────────────────────
+function idosoToRow(p) {
+    return {
+        id: p.id, processo: p.processo, data_distribuicao: p.dataDistribuicao || null,
+        denuncia: p.denuncia || null, primeira_sentenca: !!p.primeiraSentenca,
+        julgado: !!p.julgado, fase_processual: p.faseProcessual, localizacao: p.localizacao,
+        mp_origem: p.mpOrigem, defesa: p.defesa, pendencias: p.pendencias,
+    };
+}
+function rowToIdoso(r) {
+    return {
+        id: r.id, processo: r.processo, dataDistribuicao: r.data_distribuicao,
+        denuncia: r.denuncia, primeiraSentenca: r.primeira_sentenca, julgado: r.julgado,
+        faseProcessual: r.fase_processual, localizacao: r.localizacao, mpOrigem: r.mp_origem,
+        defesa: r.defesa, pendencias: r.pendencias,
+    };
+}
+function cartaToRow(c) {
+    return {
+        id: c.id, processo: c.processo, recebimento: c.recebimento || null,
+        finalidade: c.finalidade, primeira_sentenca: !!c.primeiraSentenca,
+        localizador: c.localizador, responsaveis: c.responsaveis || [],
+        prioridade: !!c.prioridade, pendencias: c.pendencias,
+    };
+}
+function rowToCarta(r) {
+    return {
+        id: r.id, processo: r.processo, recebimento: r.recebimento, finalidade: r.finalidade,
+        primeiraSentenca: r.primeira_sentenca, localizador: r.localizador,
+        responsaveis: r.responsaveis || [], prioridade: r.prioridade, pendencias: r.pendencias,
+    };
+}
+
+// ─── INIT / SYNC ─────────────────────────────────────────────────────────
+async function initApp() {
+    try {
+        const [{ data: piRows, error: e1 }, { data: cpRows, error: e2 }] = await Promise.all([
+            sb.from('processos_idosos').select('*'),
+            sb.from('cartas_precatorias').select('*'),
+        ]);
+        if (e1) throw e1;
+        if (e2) throw e2;
+        idosos = (piRows || []).map(rowToIdoso);
+        cartas = (cpRows || []).map(rowToCarta);
+        localStorage.setItem(STORAGE_IDOSOS, JSON.stringify(idosos));
+        localStorage.setItem(STORAGE_CARTAS, JSON.stringify(cartas));
+    } catch (e) {
+        console.error('Supabase init error, falling back to local storage', e);
+        idosos = JSON.parse(localStorage.getItem(STORAGE_IDOSOS) || '[]');
+        cartas = JSON.parse(localStorage.getItem(STORAGE_CARTAS) || '[]');
+        showToast('Modo offline — sincronização indisponível', 'error');
+    }
+    nextIdosoId = idosos.length ? Math.max(...idosos.map(p => p.id)) + 1 : 1;
+    nextCartaId = cartas.length ? Math.max(...cartas.map(c => c.id)) + 1 : 1;
+    renderIdosos();
+    renderCartas();
+    subscribeRealtime();
+}
+
+function subscribeRealtime() {
+    sb.channel('processos-idosos-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'processos_idosos' }, payload => {
+          handleRealtime(idosos, payload, rowToIdoso, () => { localStorage.setItem(STORAGE_IDOSOS, JSON.stringify(idosos)); renderIdosos(); });
+      })
+      .subscribe();
+    sb.channel('cartas-precatorias-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cartas_precatorias' }, payload => {
+          handleRealtime(cartas, payload, rowToCarta, () => { localStorage.setItem(STORAGE_CARTAS, JSON.stringify(cartas)); renderCartas(); });
+      })
+      .subscribe();
+}
+function handleRealtime(list, payload, mapFn, afterFn) {
+    if (payload.eventType === 'DELETE') {
+        const idx = list.findIndex(x => x.id === payload.old.id);
+        if (idx >= 0) list.splice(idx, 1);
+    } else {
+        const updated = mapFn(payload.new);
+        const idx = list.findIndex(x => x.id === updated.id);
+        if (idx >= 0) list[idx] = updated; else list.push(updated);
+    }
+    afterFn();
+}
+
+async function persistIdoso(p) {
+    localStorage.setItem(STORAGE_IDOSOS, JSON.stringify(idosos));
+    try { await sb.from('processos_idosos').upsert(idosoToRow(p)); }
+    catch (e) { console.error('Supabase save error', e); showToast('Erro ao sincronizar', 'error'); }
+}
+async function persistCarta(c) {
+    localStorage.setItem(STORAGE_CARTAS, JSON.stringify(cartas));
+    try { await sb.from('cartas_precatorias').upsert(cartaToRow(c)); }
+    catch (e) { console.error('Supabase save error', e); showToast('Erro ao sincronizar', 'error'); }
+}
+async function removeIdoso(id) {
+    localStorage.setItem(STORAGE_IDOSOS, JSON.stringify(idosos));
+    try { await sb.from('processos_idosos').delete().eq('id', id); }
+    catch (e) { console.error('Supabase delete error', e); }
+}
+async function removeCarta(id) {
+    localStorage.setItem(STORAGE_CARTAS, JSON.stringify(cartas));
+    try { await sb.from('cartas_precatorias').delete().eq('id', id); }
+    catch (e) { console.error('Supabase delete error', e); }
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────
+function diasDesde(iso) {
+    if (!iso) return null;
+    const d = new Date(iso + 'T00:00:00');
+    if (isNaN(d)) return null;
+    return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+function fmtData(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+}
+function diasClass(dias, limiteAtencao, limiteUrgente) {
+    if (dias == null) return '';
+    if (dias >= limiteUrgente) return 'dias-urgente';
+    if (dias >= limiteAtencao) return 'dias-atencao';
+    return 'dias-ok';
+}
+function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (type ? ' ' + type : '');
+    setTimeout(() => { t.className = 'toast'; }, 2800);
+}
+
+// ─── NAVEGAÇÃO ENTRE MÓDULOS ─────────────────────────────────────────────
+function setModule(m) {
+    currentModule = m;
+    document.getElementById('tab-idosos').classList.toggle('active', m === 'idosos');
+    document.getElementById('tab-cartas').classList.toggle('active', m === 'cartas');
+    document.getElementById('view-idosos').style.display = m === 'idosos' ? '' : 'none';
+    document.getElementById('view-cartas').style.display = m === 'cartas' ? '' : 'none';
+}
+
+// ═══════════════════════════ PROCESSOS IDOSOS ═══════════════════════════
+
+function getFasesUnicas() {
+    return [...new Set(idosos.map(p => p.faseProcessual).filter(Boolean))].sort();
+}
+function buildFaseFilter() {
+    const sel = document.getElementById('pi-filter-fase');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Todas as fases</option>' +
+        getFasesUnicas().map(f => `<option value="${f}">${f}</option>`).join('');
+    sel.value = current;
+}
+function filterIdosos(card) {
+    piCardFilter = piCardFilter === card ? 'todos' : card;
+    renderIdosos();
+}
+function sortIdosos(field) {
+    if (piSort.field === field) piSort.dir = piSort.dir === 'asc' ? 'desc' : 'asc';
+    else { piSort.field = field; piSort.dir = 'desc'; }
+    renderIdosos();
+}
+function getFilteredIdosos() {
+    const term = (document.getElementById('pi-search').value || '').toLowerCase();
+    const fase = document.getElementById('pi-filter-fase').value;
+    const julgadoF = document.getElementById('pi-filter-julgado').value;
+    let list = idosos.map(p => ({ ...p, _dias: diasDesde(p.dataDistribuicao) }));
+    if (term) {
+        list = list.filter(p =>
+            (p.processo || '').toLowerCase().includes(term) ||
+            (p.faseProcessual || '').toLowerCase().includes(term) ||
+            (p.mpOrigem || '').toLowerCase().includes(term) ||
+            (p.defesa || '').toLowerCase().includes(term) ||
+            (p.pendencias || '').toLowerCase().includes(term)
+        );
+    }
+    if (fase) list = list.filter(p => p.faseProcessual === fase);
+    if (julgadoF === 'sim') list = list.filter(p => p.julgado);
+    if (julgadoF === 'nao') list = list.filter(p => !p.julgado);
+    if (piCardFilter === 'urgente') list = list.filter(p => p._dias != null && p._dias > 365);
+    if (piCardFilter === 'atencao') list = list.filter(p => !p.primeiraSentenca);
+    if (piCardFilter === 'julgados') list = list.filter(p => p.julgado);
+    list.sort((a, b) => {
+        let va, vb;
+        if (piSort.field === 'tramitacao') { va = a._dias ?? -1; vb = b._dias ?? -1; }
+        else { va = (a[piSort.field] || '').toString(); vb = (b[piSort.field] || '').toString(); }
+        if (va < vb) return piSort.dir === 'asc' ? -1 : 1;
+        if (va > vb) return piSort.dir === 'asc' ? 1 : -1;
+        return 0;
+    });
+    return list;
+}
+function renderIdosos() {
+    buildFaseFilter();
+    const list = getFilteredIdosos();
+    document.getElementById('pi-total').textContent = idosos.length;
+    document.getElementById('pi-urgente').textContent = idosos.filter(p => (diasDesde(p.dataDistribuicao) || 0) > 365).length;
+    document.getElementById('pi-sem-sentenca').textContent = idosos.filter(p => !p.primeiraSentenca).length;
+    document.getElementById('pi-julgados').textContent = idosos.filter(p => p.julgado).length;
+    document.getElementById('pi-count').textContent = `${list.length} de ${idosos.length} processo(s)`;
+    ['tramitacao', 'processo', 'data_distribuicao', 'fase_processual'].forEach(f => {
+        const el = document.getElementById('sort-pi-' + f);
+        if (el) el.textContent = piSort.field === f ? (piSort.dir === 'asc' ? '▲' : '▼') : '';
+    });
+    const tbody = document.getElementById('pi-table-body');
+    if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fas fa-folder-open"></i><div>Nenhum processo encontrado</div></div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = list.map(p => `
+        <tr onclick="openModalIdoso(${p.id})">
+            <td><span class="dias-pill ${diasClass(p._dias, 180, 365)}">${p._dias != null ? p._dias + ' dias' : '—'}</span></td>
+            <td class="proc-num">${p.processo}</td>
+            <td>${fmtData(p.dataDistribuicao)}</td>
+            <td>${fmtData(p.denuncia)}</td>
+            <td><span class="badge ${p.primeiraSentenca ? 'badge-sim' : 'badge-nao'}">${p.primeiraSentenca ? 'Sim' : 'Não'}</span></td>
+            <td><span class="badge ${p.julgado ? 'badge-sim' : 'badge-nao'}">${p.julgado ? 'Sim' : 'Não'}</span></td>
+            <td>${p.faseProcessual || '—'}</td>
+            <td>${p.mpOrigem || '—'}</td>
+            <td>${p.defesa || '—'}</td>
+            <td class="pendencia-preview" title="${(p.pendencias || '').replace(/"/g, '&quot;')}">${p.pendencias || '—'}</td>
+        </tr>
+    `).join('');
+}
+document.addEventListener('input', e => { if (e.target.id === 'pi-search') renderIdosos(); });
+document.addEventListener('change', e => { if (e.target.id === 'pi-filter-fase' || e.target.id === 'pi-filter-julgado') renderIdosos(); });
+
+function openModalIdoso(id) {
+    const p = id ? idosos.find(x => x.id === id) : null;
+    document.getElementById('pi-id').value = p ? p.id : '';
+    document.getElementById('pi-processo').value = p ? p.processo : '';
+    document.getElementById('pi-data-distribuicao').value = p ? (p.dataDistribuicao || '') : '';
+    document.getElementById('pi-denuncia').value = p ? (p.denuncia || '') : '';
+    document.getElementById('pi-fase').value = p ? (p.faseProcessual || '') : '';
+    document.getElementById('pi-localizacao').value = p ? (p.localizacao || '') : '';
+    document.getElementById('pi-mp').value = p ? (p.mpOrigem || '') : '';
+    document.getElementById('pi-defesa').value = p ? (p.defesa || '') : '';
+    document.getElementById('pi-sentenca').checked = p ? !!p.primeiraSentenca : false;
+    document.getElementById('pi-julgado').checked = p ? !!p.julgado : false;
+    document.getElementById('pi-pendencias').value = p ? (p.pendencias || '') : '';
+    document.getElementById('modal-idoso-title').textContent = p ? 'Editar Processo' : 'Novo Processo';
+    document.getElementById('pi-del-btn').style.display = p ? '' : 'none';
+    document.getElementById('modal-idoso').classList.add('open');
+}
+function closeModalIdoso() { document.getElementById('modal-idoso').classList.remove('open'); }
+async function saveIdoso() {
+    const processo = document.getElementById('pi-processo').value.trim();
+    if (!processo) { showToast('Informe o número do processo', 'error'); return; }
+    const idVal = document.getElementById('pi-id').value;
+    const id = idVal ? Number(idVal) : nextIdosoId++;
+    const p = {
+        id, processo,
+        dataDistribuicao: document.getElementById('pi-data-distribuicao').value || null,
+        denuncia: document.getElementById('pi-denuncia').value || null,
+        faseProcessual: document.getElementById('pi-fase').value.trim(),
+        localizacao: document.getElementById('pi-localizacao').value.trim(),
+        mpOrigem: document.getElementById('pi-mp').value.trim(),
+        defesa: document.getElementById('pi-defesa').value.trim(),
+        primeiraSentenca: document.getElementById('pi-sentenca').checked,
+        julgado: document.getElementById('pi-julgado').checked,
+        pendencias: document.getElementById('pi-pendencias').value.trim(),
+    };
+    const idx = idosos.findIndex(x => x.id === id);
+    if (idx >= 0) idosos[idx] = p; else idosos.push(p);
+    closeModalIdoso();
+    renderIdosos();
+    await persistIdoso(p);
+    showToast('Processo salvo com sucesso');
+}
+async function deleteIdoso() {
+    const id = Number(document.getElementById('pi-id').value);
+    if (!id) return;
+    if (!confirm('Excluir este processo do controle?')) return;
+    idosos = idosos.filter(x => x.id !== id);
+    closeModalIdoso();
+    renderIdosos();
+    await removeIdoso(id);
+    showToast('Processo excluído');
+}
+
+// ═══════════════════════════ CARTAS PRECATÓRIAS ═══════════════════════════
+
+function filterCartas(card) {
+    cpCardFilter = cpCardFilter === card ? 'todos' : card;
+    renderCartas();
+}
+function togglePrioridadeFilter() {
+    cpOnlyPrioridade = !cpOnlyPrioridade;
+    document.getElementById('cp-prioridade-btn').classList.toggle('active', cpOnlyPrioridade);
+    renderCartas();
+}
+function sortCartas(field) {
+    if (cpSort.field === field) cpSort.dir = cpSort.dir === 'asc' ? 'desc' : 'asc';
+    else { cpSort.field = field; cpSort.dir = 'desc'; }
+    renderCartas();
+}
+function getFilteredCartas() {
+    const term = (document.getElementById('cp-search').value || '').toLowerCase();
+    let list = cartas.map(c => ({ ...c, _dias: diasDesde(c.recebimento) }));
+    if (term) {
+        list = list.filter(c =>
+            (c.processo || '').toLowerCase().includes(term) ||
+            (c.finalidade || '').toLowerCase().includes(term) ||
+            (c.localizador || '').toLowerCase().includes(term) ||
+            (c.responsaveis || []).join(' ').toLowerCase().includes(term) ||
+            (c.pendencias || '').toLowerCase().includes(term)
+        );
+    }
+    if (cpOnlyPrioridade) list = list.filter(c => c.prioridade);
+    if (cpCardFilter === 'prioridade') list = list.filter(c => c.prioridade);
+    if (cpCardFilter === 'atencao') list = list.filter(c => c._dias != null && c._dias > 180);
+    list.sort((a, b) => {
+        let va, vb;
+        if (cpSort.field === 'tramitacao') { va = a._dias ?? -1; vb = b._dias ?? -1; }
+        else { va = (a[cpSort.field] || '').toString(); vb = (b[cpSort.field] || '').toString(); }
+        if (va < vb) return cpSort.dir === 'asc' ? -1 : 1;
+        if (va > vb) return cpSort.dir === 'asc' ? 1 : -1;
+        return 0;
+    });
+    return list;
+}
+function renderCartas() {
+    const list = getFilteredCartas();
+    document.getElementById('cp-total').textContent = cartas.length;
+    document.getElementById('cp-prioridade').textContent = cartas.filter(c => c.prioridade).length;
+    document.getElementById('cp-atencao').textContent = cartas.filter(c => (diasDesde(c.recebimento) || 0) > 180).length;
+    document.getElementById('cp-count').textContent = `${list.length} de ${cartas.length} carta(s)`;
+    ['tramitacao', 'processo', 'recebimento'].forEach(f => {
+        const el = document.getElementById('sort-cp-' + f);
+        if (el) el.textContent = cpSort.field === f ? (cpSort.dir === 'asc' ? '▲' : '▼') : '';
+    });
+    const tbody = document.getElementById('cp-table-body');
+    if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="fas fa-envelope-open-text"></i><div>Nenhuma carta precatória encontrada</div></div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = list.map(c => `
+        <tr onclick="openModalCarta(${c.id})">
+            <td><span class="dias-pill ${diasClass(c._dias, 90, 180)}">${c._dias != null ? c._dias + ' dias' : '—'}</span></td>
+            <td class="proc-num">${c.processo}</td>
+            <td>${fmtData(c.recebimento)}</td>
+            <td>${c.finalidade || '—'}</td>
+            <td><span class="badge ${c.primeiraSentenca ? 'badge-sim' : 'badge-nao'}">${c.primeiraSentenca ? 'Sim' : 'Não'}</span></td>
+            <td>${c.localizador || '—'}</td>
+            <td>${(c.responsaveis || []).join(', ') || '—'}</td>
+            <td>${c.prioridade ? '<span class="badge badge-prioridade"><i class="fas fa-star"></i> Prioridade</span>' : '—'}</td>
+            <td class="pendencia-preview" title="${(c.pendencias || '').replace(/"/g, '&quot;')}">${c.pendencias || '—'}</td>
+        </tr>
+    `).join('');
+}
+document.addEventListener('input', e => { if (e.target.id === 'cp-search') renderCartas(); });
+
+function addRespRow(value) {
+    const list = document.getElementById('cp-resp-list');
+    const row = document.createElement('div');
+    row.className = 'resp-row';
+    row.innerHTML = `<input type="text" placeholder="Nome do responsável" value="${(value || '').replace(/"/g, '&quot;')}">
+        <button type="button" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
+    list.appendChild(row);
+}
+function openModalCarta(id) {
+    const c = id ? cartas.find(x => x.id === id) : null;
+    document.getElementById('cp-id').value = c ? c.id : '';
+    document.getElementById('cp-processo').value = c ? c.processo : '';
+    document.getElementById('cp-recebimento').value = c ? (c.recebimento || '') : '';
+    document.getElementById('cp-finalidade').value = c ? (c.finalidade || '') : '';
+    document.getElementById('cp-localizador').value = c ? (c.localizador || '') : '';
+    document.getElementById('cp-sentenca').checked = c ? !!c.primeiraSentenca : false;
+    document.getElementById('cp-prioridade').checked = c ? !!c.prioridade : false;
+    document.getElementById('cp-pendencias').value = c ? (c.pendencias || '') : '';
+    const respList = document.getElementById('cp-resp-list');
+    respList.innerHTML = '';
+    const resps = c && c.responsaveis && c.responsaveis.length ? c.responsaveis : [''];
+    resps.forEach(r => addRespRow(r));
+    document.getElementById('modal-carta-title').textContent = c ? 'Editar Carta Precatória' : 'Nova Carta Precatória';
+    document.getElementById('cp-del-btn').style.display = c ? '' : 'none';
+    document.getElementById('modal-carta').classList.add('open');
+}
+function closeModalCarta() { document.getElementById('modal-carta').classList.remove('open'); }
+async function saveCarta() {
+    const processo = document.getElementById('cp-processo').value.trim();
+    if (!processo) { showToast('Informe o número do processo', 'error'); return; }
+    const idVal = document.getElementById('cp-id').value;
+    const id = idVal ? Number(idVal) : nextCartaId++;
+    const responsaveis = Array.from(document.querySelectorAll('#cp-resp-list input'))
+        .map(i => i.value.trim()).filter(Boolean);
+    const c = {
+        id, processo,
+        recebimento: document.getElementById('cp-recebimento').value || null,
+        finalidade: document.getElementById('cp-finalidade').value.trim(),
+        localizador: document.getElementById('cp-localizador').value.trim(),
+        primeiraSentenca: document.getElementById('cp-sentenca').checked,
+        prioridade: document.getElementById('cp-prioridade').checked,
+        responsaveis,
+        pendencias: document.getElementById('cp-pendencias').value.trim(),
+    };
+    const idx = cartas.findIndex(x => x.id === id);
+    if (idx >= 0) cartas[idx] = c; else cartas.push(c);
+    closeModalCarta();
+    renderCartas();
+    await persistCarta(c);
+    showToast('Carta precatória salva com sucesso');
+}
+async function deleteCarta() {
+    const id = Number(document.getElementById('cp-id').value);
+    if (!id) return;
+    if (!confirm('Excluir esta carta precatória do controle?')) return;
+    cartas = cartas.filter(x => x.id !== id);
+    closeModalCarta();
+    renderCartas();
+    await removeCarta(id);
+    showToast('Carta precatória excluída');
+}
+</script>
+</body>
+</html>

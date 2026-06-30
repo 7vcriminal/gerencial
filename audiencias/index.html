@@ -1245,8 +1245,16 @@ async function saveData(rows) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(audiencias));
     try {
         const { error } = await sb.from('audiencias').upsert((rows || audiencias).map(toSupabaseRow));
-        if (error) { console.error('Supabase save error', error); showToast('Erro ao salvar na nuvem: ' + error.message, 'error'); }
-    } catch (e) { console.error('Supabase save error', e); showToast('Erro ao salvar na nuvem: ' + e.message, 'error'); }
+        if (error) {
+            console.error('Supabase save error', error);
+            showToast('Erro ao salvar na nuvem: ' + error.message, 'error');
+            alert('NÃO FOI POSSÍVEL SALVAR NA NUVEM.\n\nMensagem técnica (envie esta mensagem para o suporte):\n' + (error.message || JSON.stringify(error)) + (error.code ? ('\nCódigo: ' + error.code) : '') + (error.hint ? ('\nDica: ' + error.hint) : ''));
+        }
+    } catch (e) {
+        console.error('Supabase save error', e);
+        showToast('Erro ao salvar na nuvem: ' + e.message, 'error');
+        alert('NÃO FOI POSSÍVEL SALVAR NA NUVEM (falha de conexão).\n\nMensagem técnica (envie esta mensagem para o suporte):\n' + e.message);
+    }
 }
 
 async function saveCadastros() {

@@ -2340,8 +2340,11 @@ function _imprimirPDF(filtered, cols, nomeUsuario) {
     const th = id => show(id) ? `<th>${cols.find(c=>c.id===id).label}</th>` : '';
     const td = (id, val, cls='') => show(id) ? `<td${cls?' class="'+cls+'"':''}>${val}</td>` : '';
 
-    const linhas = filtered.map(a => `
-        <tr class="${a.reuPreso ? 'preso' : ''}">
+    const linhas = filtered.map((a, i) => {
+        const next = filtered[i + 1];
+        const isDayEnd = !next || (next.data || '') !== (a.data || '');
+        const cls = [a.reuPreso ? 'preso' : '', isDayEnd ? 'day-end' : ''].filter(Boolean).join(' ');
+        return `<tr${cls ? ` class="${cls}"` : ''}>
             ${td('col-data', fmtData(a.data))}
             ${td('col-hora', a.hora || '--:--')}
             ${td('col-reu', a.reu ? a.reu.split(' / ').map((n,i) => n + (a.reusPreso ? (a.reusPreso[i] ? ' 🔒' : '') : (a.reuPreso && i===0 ? ' 🔒' : ''))).join('<br>') : '—')}
@@ -2353,7 +2356,8 @@ function _imprimirPDF(filtered, cols, nomeUsuario) {
             ${td('col-intm', a.intimacoes ? '✓' : '○', 'center')}
             ${td('col-termo', a.termo ? '✓' : '○', 'center')}
             ${td('col-pendencias', a.pendencias || '')}
-        </tr>`).join('');
+        </tr>`;
+    }).join('');
 
     const html = `<!DOCTYPE html><html lang="pt-br"><head>
 <meta charset="UTF-8">
@@ -2373,6 +2377,7 @@ function _imprimirPDF(filtered, cols, nomeUsuario) {
     table { width: 100%; border-collapse: collapse; font-size: 11px; }
     thead th { background: #1a2a6c; color: white; padding: 6px 7px; text-align: center; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; font-family: inherit; }
     tbody tr { border-bottom: 1px solid #e2e8f0; }
+    tbody tr.day-end { border-bottom: 3px solid #475569; }
     tbody tr:nth-child(even) { background: #f8fafc; }
     tbody tr.preso { background: #fff5f5; }
     tbody tr.preso:nth-child(even) { background: #ffe8e8; }
@@ -2381,8 +2386,9 @@ function _imprimirPDF(filtered, cols, nomeUsuario) {
     .pg-header { display: none; }
     .pg-footer { display: none; }
     @media print {
-        body { padding: 10px; padding-bottom: 32px; }
-        @page { margin: 15mm; size: A4 landscape; }
+        body { padding: 10px; padding-bottom: 40px; }
+        @page { margin: 15mm 15mm 22mm 15mm; size: A4 landscape; }
+        tbody tr.day-end { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         tbody tr.preso { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .pg-footer {

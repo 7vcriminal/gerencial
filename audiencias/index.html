@@ -1427,8 +1427,10 @@ function buildSelectores() {
     const proOpts = promotores.filter(p => p.ativo).map(p => `<option value="${p.nome}">${p.nome}</option>`).join('');
     document.getElementById('f-promotor').innerHTML = '<option value="">— Selecione —</option>' + proOpts;
 
-    // Form modal - sala virtual
-    const salaOpts = salas.filter(s => s.ativo).map(s => `<option value="${s.link}">${s.nome}</option>`).join('');
+    // Form modal - sala virtual (ordenadas pelo primeiro horário)
+    const salaOpts = salas.filter(s => s.ativo)
+        .sort((a, b) => (a.horas[0] || '99:99') < (b.horas[0] || '99:99') ? -1 : 1)
+        .map(s => `<option value="${s.link}">${s.nome}${s.horas.length ? ' — ' + s.horas[0] : ''}</option>`).join('');
     document.getElementById('f-sala').innerHTML = '<option value="">— Sem sala —</option>' + salaOpts;
 
     // Quick add - ano
@@ -2434,8 +2436,12 @@ async function gerarPDF() {
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center';
     overlay.innerHTML = `<div style="background:#fff;border-radius:12px;padding:1.5rem;max-width:420px;width:90%;font-family:inherit">
         <h3 style="margin-bottom:1rem;font-size:1rem;color:#1a2a6c"><i class="fas fa-file-pdf" style="color:#e74c3c"></i> Exportar PDF</h3>
-        <p style="font-size:0.8rem;color:#64748b;margin-bottom:1rem">${filtered.length} audiências com os filtros atuais. Selecione as colunas:</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-bottom:1.25rem">
+        <p style="font-size:0.8rem;color:#64748b;margin-bottom:0.5rem">${filtered.length} audiências com os filtros atuais. Selecione as colunas:</p>
+        <div style="display:flex;gap:0.5rem;margin-bottom:0.6rem">
+            <button onclick="document.querySelectorAll('#pdf-col-grid input').forEach(i=>i.checked=true)" style="flex:1;padding:0.3rem;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;font-size:0.78rem;cursor:pointer">Marcar todos</button>
+            <button onclick="document.querySelectorAll('#pdf-col-grid input').forEach(i=>i.checked=false)" style="flex:1;padding:0.3rem;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;font-size:0.78rem;cursor:pointer">Desmarcar todos</button>
+        </div>
+        <div id="pdf-col-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-bottom:1.25rem">
             ${colOpts.map(c=>`<label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer">
                 <input type="checkbox" id="${c.id}" ${c.def?'checked':''} style="accent-color:#1a2a6c">
                 ${c.label}</label>`).join('')}

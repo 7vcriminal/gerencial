@@ -2078,7 +2078,13 @@ function renderCadastroList() {
             document.getElementById('cadastro-list').innerHTML = `<p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1rem">Nenhuma sala cadastrada.</p>`;
             return;
         }
-        document.getElementById('cadastro-list').innerHTML = salas.map((s, i) => `
+        // índices ordenados pelo primeiro horário de cada sala
+        const idxOrdenados = salas.map((s, i) => i).sort((a, b) => {
+            const ha = salas[a].horas[0] || '99:99';
+            const hb = salas[b].horas[0] || '99:99';
+            return ha < hb ? -1 : ha > hb ? 1 : 0;
+        });
+        document.getElementById('cadastro-list').innerHTML = idxOrdenados.map(i => { const s = salas[i]; return `
             <div class="cadastro-item ${s.ativo?'':'inativo'}" id="cadastro-item-${i}">
                 <div style="flex:1;min-width:0">
                     <div style="font-weight:600;font-size:0.88rem">${s.nome}</div>
@@ -2092,7 +2098,7 @@ function renderCadastroList() {
                     </button>
                     <button class="btn-del" onclick="removeSala(${i})" title="Remover"><i class="fas fa-trash"></i></button>
                 </div>
-            </div>`).join('');
+            </div>`; }).join('');
         return;
     }
     const list = cadastroSection==='magistrados' ? magistrados : promotores;
@@ -2164,6 +2170,23 @@ function toggleCadastroAtivo(i) {
     renderCadastroList();
 }
 
+function aplicarSalasAudiencias() {
+    // Para cada audiência pautada, preenche salaLink com base no horário (não sobrescreve link já definido manualmente)
+    const alteradas = [];
+    audiencias.forEach(a => {
+        const sala = salas.find(s => s.ativo && s.horas.includes(a.hora));
+        if (sala && a.salaLink !== sala.link) {
+            a.salaLink = sala.link;
+            alteradas.push(a);
+        }
+    });
+    if (alteradas.length) {
+        saveData(alteradas);
+        render();
+        showToast(`Link de sala atribuído a ${alteradas.length} audiência(s).`, 'success');
+    }
+}
+
 function addSala() {
     const nome = document.getElementById('sala-input-nome').value.trim();
     const link = document.getElementById('sala-input-link').value.trim();
@@ -2177,6 +2200,7 @@ function addSala() {
     document.getElementById('sala-input-link').value = '';
     document.getElementById('sala-input-horas').value = '';
     renderCadastroList();
+    aplicarSalasAudiencias();
     showToast('Sala cadastrada!', 'success');
 }
 
@@ -2194,6 +2218,7 @@ function editSala(i) {
     saveCadastros();
     renderCadastroList();
     buildSelectores();
+    aplicarSalasAudiencias();
     showToast('Sala atualizada!', 'success');
 }
 
@@ -2450,7 +2475,12 @@ function _imprimirPDF(filtered, cols, nomeUsuario) {
     if (activeCard !== 'total') descFiltros.push(`Card: ${activeCard}`);
 
     const th = id => show(id) ? `<th>${cols.find(c=>c.id===id).label}</th>` : '';
-    const td = (id, val, cls='') => show(id) ? `<td${cls?' class="'+cls+'"':''}>${val}</td>` : '';
+    const td = (id, val, cls='') => {
+        if (!show(id)) return '';
+        // réu e anotações ficam alinhados à esquerda
+        const align = (id === 'col-reu' || id === 'col-pendencias') ? 'left' : cls || '';
+        return `<td${align?' class="'+align+'"':''}>${val}</td>`;
+    };
 
     const linhas = filtered.map((a, i) => {
         const next = filtered[i + 1];
@@ -2494,7 +2524,8 @@ function _imprimirPDF(filtered, cols, nomeUsuario) {
     tbody tr:nth-child(even) { background: #f8fafc; }
     tbody tr.preso { background: #fff5f5; }
     tbody tr.preso:nth-child(even) { background: #ffe8e8; }
-    td { padding: 5px 7px; vertical-align: top; font-family: inherit; }
+    td { padding: 5px 7px; vertical-align: top; font-family: inherit; text-align: center; }
+    td.left { text-align: left; }
     td.center { text-align: center; }
     .pg-header { display: none; }
     .pg-footer { display: none; }

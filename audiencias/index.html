@@ -569,6 +569,7 @@
                     <th onclick="sortBy('magistrado')">Magistrado <span id="sort-magistrado"></span></th>
                     <th class="no-sort">Promotor</th>
                     <th onclick="sortBy('status')">Status <span id="sort-status"></span></th>
+                    <th class="no-sort" style="width:3rem;text-align:center">Sala</th>
                     <th class="no-sort toggle-col">PROJUDI</th>
                     <th class="no-sort toggle-col">Intimações</th>
                     <th class="no-sort toggle-col">Termos</th>
@@ -751,6 +752,10 @@
                     <select id="f-promotor"></select>
                 </div>
                 <div class="form-group">
+                    <label>Sala Virtual</label>
+                    <select id="f-sala"></select>
+                </div>
+                <div class="form-group">
                     <label>Status</label>
                     <select id="f-status">
                         <option value="">Pendente</option>
@@ -804,11 +809,18 @@
             <div class="cadastro-tabs">
                 <button class="cadastro-tab active" id="tab-mag" onclick="switchCadastro('magistrados')"><i class="fas fa-gavel"></i> Magistrados</button>
                 <button class="cadastro-tab" id="tab-pro" onclick="switchCadastro('promotores')"><i class="fas fa-scale-balanced"></i> Promotores</button>
+                <button class="cadastro-tab" id="tab-sal" onclick="switchCadastro('salas')"><i class="fas fa-video"></i> Salas</button>
             </div>
             <div id="cadastro-list" class="cadastro-list"></div>
-            <div class="cadastro-add-row">
+            <div id="cadastro-add-row-padrao" class="cadastro-add-row">
                 <input type="text" id="cadastro-input" placeholder="Nome completo..." onkeydown="if(event.key==='Enter')addCadastroItem()">
                 <button class="btn-cadastro-add" onclick="addCadastroItem()"><i class="fas fa-plus"></i> Adicionar</button>
+            </div>
+            <div id="cadastro-add-row-sala" style="display:none;flex-direction:column;gap:0.4rem;padding-top:0.5rem">
+                <input type="text" id="sala-input-nome" placeholder="Nome da sala (ex: Sala 1)" style="padding:0.45rem 0.65rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.85rem">
+                <input type="url" id="sala-input-link" placeholder="Link (https://...)" style="padding:0.45rem 0.65rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.85rem">
+                <input type="text" id="sala-input-horas" placeholder="Horários (ex: 08:00,09:00,10:00)" style="padding:0.45rem 0.65rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.85rem">
+                <button class="btn-cadastro-add" onclick="addSala()" style="width:100%;justify-content:center"><i class="fas fa-plus"></i> Adicionar Sala</button>
             </div>
         </div>
         <div class="modal-footer">
@@ -888,10 +900,12 @@ const STORAGE_KEY      = 'audiencias_v2';
 const STORAGE_KEY_LEGACY = 'audiencias_2026';
 const STORAGE_MAG      = 'cadastro_magistrados';
 const STORAGE_PRO      = 'cadastro_promotores';
+const STORAGE_SAL      = 'cadastro_salas';
 
 let audiencias = [];
 let magistrados = [];
 let promotores  = [];
+let salas       = [];
 let currentView = 'agenda';
 let currentAno  = 2026;
 let currentMes  = 'Todos';
@@ -1116,6 +1130,7 @@ function toSupabaseRow(a) {
         reservado: !!a.reservado,
         prio_idoso: !!a.prioIdoso, prio_hediondo: !!a.prioHediondo,
         prio_violencia: !!a.prioViolencia, prio_meta2: !!a.prioMeta2,
+        sala_link: a.salaLink || null,
         criado_em: a.criadoEm || null,
     };
 }
@@ -1129,6 +1144,7 @@ function fromSupabaseRow(r) {
         reservado: !!r.reservado,
         prioIdoso: !!r.prio_idoso, prioHediondo: !!r.prio_hediondo,
         prioViolencia: !!r.prio_violencia, prioMeta2: !!r.prio_meta2,
+        salaLink: r.sala_link || '',
         criadoEm: r.criado_em,
     };
 }
@@ -1185,11 +1201,16 @@ async function initApp() {
                 promotores = [...new Set(audiencias.map(a => a.promotor).filter(Boolean))].sort().map(n => ({nome: n, ativo: true}));
             }
         }
+        const { data: salsData } = await sb.from('salas').select('*').order('id');
+        salas = (salsData || []).map(s => ({nome: s.nome, link: s.link, horas: s.horas || [], ativo: s.ativo !== false}));
         localStorage.setItem(STORAGE_KEY, JSON.stringify(audiencias));
         localStorage.setItem(STORAGE_MAG, JSON.stringify(magistrados));
         localStorage.setItem(STORAGE_PRO, JSON.stringify(promotores));
+        localStorage.setItem(STORAGE_SAL, JSON.stringify(salas));
     } catch (e) {
         console.error('Supabase init error, falling back to local storage', e);
+        const salLocal = localStorage.getItem(STORAGE_SAL);
+        if (salLocal) salas = JSON.parse(salLocal);
         seedLocalData();
         showToast('Modo offline — sincronização indisponível', 'error');
     }
@@ -1212,6 +1233,7 @@ function subscribeRealtime() {
     sb.channel('cadastros-sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'magistrados' }, () => reloadCadastros())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'promotores' }, () => reloadCadastros())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'salas' }, () => reloadCadastros())
       .subscribe();
 }
 
@@ -1232,10 +1254,13 @@ async function reloadCadastros() {
     try {
         const { data: mags } = await sb.from('magistrados').select('*').order('id');
         const { data: pros } = await sb.from('promotores').select('*').order('id');
+        const { data: sals } = await sb.from('salas').select('*').order('id');
         magistrados = (mags || []).map(m => ({nome: m.nome, ativo: m.ativo}));
         promotores = (pros || []).map(p => ({nome: p.nome, ativo: p.ativo}));
+        salas = (sals || []).map(s => ({nome: s.nome, link: s.link, horas: s.horas || [], ativo: s.ativo !== false}));
         localStorage.setItem(STORAGE_MAG, JSON.stringify(magistrados));
         localStorage.setItem(STORAGE_PRO, JSON.stringify(promotores));
+        localStorage.setItem(STORAGE_SAL, JSON.stringify(salas));
         if (typeof renderCadastroList === 'function') renderCadastroList();
         buildSelectores();
     } catch (e) { console.error('Supabase reloadCadastros error', e); }
@@ -1260,11 +1285,14 @@ async function saveData(rows) {
 async function saveCadastros() {
     localStorage.setItem(STORAGE_MAG, JSON.stringify(magistrados));
     localStorage.setItem(STORAGE_PRO, JSON.stringify(promotores));
+    localStorage.setItem(STORAGE_SAL, JSON.stringify(salas));
     try {
         await sb.from('magistrados').delete().neq('id', -1);
         if (magistrados.length) await sb.from('magistrados').insert(magistrados.map(m => ({nome: m.nome, ativo: m.ativo})));
         await sb.from('promotores').delete().neq('id', -1);
         if (promotores.length) await sb.from('promotores').insert(promotores.map(p => ({nome: p.nome, ativo: p.ativo})));
+        await sb.from('salas').delete().neq('id', -1);
+        if (salas.length) await sb.from('salas').insert(salas.map(s => ({nome: s.nome, link: s.link, horas: s.horas, ativo: s.ativo})));
     } catch (e) { console.error('Supabase cadastro save error', e); }
 }
 
@@ -1398,6 +1426,10 @@ function buildSelectores() {
     const proOpts = promotores.filter(p => p.ativo).map(p => `<option value="${p.nome}">${p.nome}</option>`).join('');
     document.getElementById('f-promotor').innerHTML = '<option value="">— Selecione —</option>' + proOpts;
 
+    // Form modal - sala virtual
+    const salaOpts = salas.filter(s => s.ativo).map(s => `<option value="${s.link}">${s.nome}</option>`).join('');
+    document.getElementById('f-sala').innerHTML = '<option value="">— Sem sala —</option>' + salaOpts;
+
     // Quick add - ano
     const years = getAvailableYears();
     const anoOpts = years.map(y => `<option value="${y}" ${y===currentAno?'selected':''}>${y}</option>`).join('');
@@ -1466,6 +1498,7 @@ function renderTable(filtered) {
             <td class="magistrado">${a.magistrado||'—'}</td>
             <td class="promotor" style="font-size:0.8rem;color:var(--muted)">${a.promotor||'—'}</td>
             <td class="status-cell">${statusCell}</td>
+            <td style="text-align:center" onclick="event.stopPropagation()">${a.salaLink ? `<a href="${a.salaLink}" target="_blank" rel="noopener" title="${a.salaLink}" style="color:#1a2a6c;font-size:1.1rem"><i class="fas fa-video"></i></a>` : '<span style="color:#cbd5e0;font-size:0.8rem">—</span>'}</td>
             <td class="toggle-col" onclick="event.stopPropagation()">
                 <button class="toggle-pill ${a.projudi?'on':'off'} ${alertaProj?'alerta':''}"
                     title="${alertaProj?'⚠ PROJUDI não registrado há mais de 5 dias!':'PROJUDI'}"
@@ -1705,11 +1738,13 @@ function gerarLote() {
     const horarios = calcLoteHorarios();
     const novas = [];
     horarios.forEach(hora => {
+        const salaAutoLote = (salas.find(s => s.ativo && s.horas.includes(hora)) || {}).link || '';
         const nova = {
             id: nextId++, ano, mes, data, hora,
             processo: '', reu: '', magistrado: mag, promotor: pro,
             status: '', pendencias: '', observacoes: '',
             reuPreso: false, projudi: false, intimacoes: false, termo: false,
+            salaLink: salaAutoLote,
             criadoEm: new Date().toISOString().slice(0,10),
         };
         audiencias.push(nova);
@@ -1926,6 +1961,9 @@ function openModal(id, force) {
     buildSelectores();
     document.getElementById('f-magistrado').value = a.magistrado || '';
     document.getElementById('f-promotor').value   = a.promotor   || '';
+    // auto-seleciona sala: usa o link salvo ou busca pelo horário
+    const salaAuto = a.salaLink || (salas.find(s => s.ativo && s.horas.includes(a.hora)) || {}).link || '';
+    document.getElementById('f-sala').value = salaAuto;
 
     document.getElementById('form-modal').classList.add('open');
     document.querySelector('#form-modal .modal').scrollTop = 0;
@@ -1963,6 +2001,7 @@ function saveAudiencia() {
         reu: (() => { const reuRows = Array.from(document.querySelectorAll('#f-reus-list .reu-row')); return reuRows.map(r => r.querySelector('.reu-input').value.trim()).filter(Boolean).join(' / '); })(),
         magistrado: document.getElementById('f-magistrado').value,
         promotor: document.getElementById('f-promotor').value,
+        salaLink: document.getElementById('f-sala').value,
         status: document.getElementById('f-status').value,
         pendencias: document.getElementById('f-pendencias').value.trim(),
         observacoes: document.getElementById('f-observacoes').value.trim(),
@@ -2025,11 +2064,37 @@ function switchCadastro(section) {
     cadastroSection = section;
     document.getElementById('tab-mag').classList.toggle('active', section==='magistrados');
     document.getElementById('tab-pro').classList.toggle('active', section==='promotores');
-    document.getElementById('cadastro-input').value = '';
+    document.getElementById('tab-sal').classList.toggle('active', section==='salas');
+    const isSala = section === 'salas';
+    document.getElementById('cadastro-add-row-padrao').style.display = isSala ? 'none' : '';
+    document.getElementById('cadastro-add-row-sala').style.display = isSala ? 'flex' : 'none';
+    if (!isSala) document.getElementById('cadastro-input').value = '';
     renderCadastroList();
 }
 
 function renderCadastroList() {
+    if (cadastroSection === 'salas') {
+        if (!salas.length) {
+            document.getElementById('cadastro-list').innerHTML = `<p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1rem">Nenhuma sala cadastrada.</p>`;
+            return;
+        }
+        document.getElementById('cadastro-list').innerHTML = salas.map((s, i) => `
+            <div class="cadastro-item ${s.ativo?'':'inativo'}" id="cadastro-item-${i}">
+                <div style="flex:1;min-width:0">
+                    <div style="font-weight:600;font-size:0.88rem">${s.nome}</div>
+                    <div style="font-size:0.75rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.link}">${s.link || '— sem link —'}</div>
+                    <div style="font-size:0.72rem;color:#7c3aed;margin-top:2px">${s.horas.length ? s.horas.join(' · ') : '— sem horários —'}</div>
+                </div>
+                <div class="cadastro-item-actions">
+                    <button class="btn-edit" onclick="editSala(${i})" title="Editar"><i class="fas fa-pen"></i></button>
+                    <button class="btn-edit" onclick="toggleSalaAtivo(${i})" title="${s.ativo?'Desativar':'Ativar'}">
+                        <i class="fas fa-${s.ativo?'eye-slash':'eye'}"></i>
+                    </button>
+                    <button class="btn-del" onclick="removeSala(${i})" title="Remover"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>`).join('');
+        return;
+    }
     const list = cadastroSection==='magistrados' ? magistrados : promotores;
     if (!list.length) {
         document.getElementById('cadastro-list').innerHTML = `<p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1rem">Nenhum cadastro ainda.</p>`;
@@ -2095,6 +2160,52 @@ function removeCadastroItem(i) {
 function toggleCadastroAtivo(i) {
     if (cadastroSection==='magistrados') magistrados[i].ativo = !magistrados[i].ativo;
     else promotores[i].ativo = !promotores[i].ativo;
+    saveCadastros();
+    renderCadastroList();
+}
+
+function addSala() {
+    const nome = document.getElementById('sala-input-nome').value.trim();
+    const link = document.getElementById('sala-input-link').value.trim();
+    const horasRaw = document.getElementById('sala-input-horas').value.trim();
+    if (!nome) { showToast('Informe o nome da sala', 'error'); return; }
+    if (!link) { showToast('Informe o link da sala', 'error'); return; }
+    const horas = horasRaw ? horasRaw.split(',').map(h => h.trim()).filter(Boolean) : [];
+    salas.push({ nome, link, horas, ativo: true });
+    saveCadastros();
+    document.getElementById('sala-input-nome').value = '';
+    document.getElementById('sala-input-link').value = '';
+    document.getElementById('sala-input-horas').value = '';
+    renderCadastroList();
+    showToast('Sala cadastrada!', 'success');
+}
+
+function editSala(i) {
+    const s = salas[i];
+    const novoNome = prompt('Nome da sala:', s.nome);
+    if (novoNome === null) return;
+    const novoLink = prompt('Link da sala:', s.link);
+    if (novoLink === null) return;
+    const novasHoras = prompt('Horários (separados por vírgula):', s.horas.join(','));
+    if (novasHoras === null) return;
+    salas[i].nome = novoNome.trim() || s.nome;
+    salas[i].link = novoLink.trim() || s.link;
+    salas[i].horas = novasHoras ? novasHoras.split(',').map(h => h.trim()).filter(Boolean) : [];
+    saveCadastros();
+    renderCadastroList();
+    buildSelectores();
+    showToast('Sala atualizada!', 'success');
+}
+
+function removeSala(i) {
+    if (!confirm('Remover esta sala?')) return;
+    salas.splice(i, 1);
+    saveCadastros();
+    renderCadastroList();
+}
+
+function toggleSalaAtivo(i) {
+    salas[i].ativo = !salas[i].ativo;
     saveCadastros();
     renderCadastroList();
 }

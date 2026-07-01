@@ -207,10 +207,10 @@
         .alerta-badge { display: inline-flex; align-items: center; gap: 3px; background: #fdecea; color: var(--red); border-radius: 50px; padding: 0.15rem 0.5rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
 
         /* PENDÊNCIAS NA TABELA */
-        td.pendencias-col { font-size: 0.78rem; color: var(--muted); max-width: 180px; white-space: pre-wrap; word-break: break-word; line-height: 1.4; }
+        td.pendencias-col { font-size: 0.78rem; color: var(--muted); max-width: 180px; white-space: pre-wrap; word-break: break-word; line-height: 1.4; text-align: center; }
         td.reu { font-weight: 600; max-width: 220px; word-break: break-word; text-transform: uppercase; }
         td.reu .reu-nome { display: flex; align-items: center; gap: 5px; line-height: 1.5; white-space: normal; }
-        td.magistrado, td.promotor { max-width: 140px; white-space: normal; word-break: break-word; overflow-wrap: break-word; }
+        td.magistrado, td.promotor { max-width: 140px; white-space: normal; word-break: break-word; overflow-wrap: break-word; text-align: center; }
 
         .actions-cell { white-space: nowrap; }
         .btn-edit, .btn-del { border: none; border-radius: 6px; cursor: pointer; padding: 0.3rem 0.6rem; font-size: 0.8rem; transition: var(--transition); }
@@ -2400,6 +2400,7 @@ async function gerarPDF() {
         {id:'col-magistrado',label:'Magistrado',  def:true},
         {id:'col-promotor',  label:'Promotor',    def:true},
         {id:'col-status',    label:'Status',      def:true},
+        {id:'col-sala',      label:'Sala Virtual',def:false},
         {id:'col-proj',      label:'PROJUDI',     def:true},
         {id:'col-intm',      label:'Intimações',  def:true},
         {id:'col-termo',     label:'Termos',      def:true},
@@ -2463,6 +2464,7 @@ function _imprimirPDF(filtered, cols, nomeUsuario) {
             ${td('col-magistrado', a.magistrado || '—')}
             ${td('col-promotor', a.promotor || '—')}
             ${td('col-status', a.status || 'Pendente')}
+            ${show('col-sala') ? `<td class="center">${a.salaLink ? `<a href="${a.salaLink}" style="color:#1a2a6c;font-size:10px;word-break:break-all">${a.salaLink}</a>` : '—'}</td>` : ''}
             ${td('col-proj', a.projudi ? '✓' : '○', 'center')}
             ${td('col-intm', a.intimacoes ? '✓' : '○', 'center')}
             ${td('col-termo', a.termo ? '✓' : '○', 'center')}
@@ -2536,7 +2538,7 @@ ${descFiltros.length ? `<div class="filtros"><strong>Filtros aplicados:</strong>
         .map(([l,v,c]) => `<div class="resumo-item"><strong style="color:${c}">${v}</strong>${l}</div>`).join(''); })()}
 </div>
 <table>
-    <thead><tr>${th('col-data')}${th('col-hora')}${th('col-reu')}${th('col-processo')}${th('col-magistrado')}${th('col-promotor')}${th('col-status')}${th('col-proj')}${th('col-intm')}${th('col-termo')}${th('col-pendencias')}</tr></thead>
+    <thead><tr>${th('col-data')}${th('col-hora')}${th('col-reu')}${th('col-processo')}${th('col-magistrado')}${th('col-promotor')}${th('col-status')}${th('col-sala')}${th('col-proj')}${th('col-intm')}${th('col-termo')}${th('col-pendencias')}</tr></thead>
     <tbody>${linhas}</tbody>
 </table>
 </body></html>`;

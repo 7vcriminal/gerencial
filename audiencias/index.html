@@ -2397,14 +2397,14 @@ async function gerarPDF() {
         {id:'col-hora',      label:'Hora',        def:true},
         {id:'col-reu',       label:'Réu',         def:true},
         {id:'col-processo',  label:'Processo',    def:true},
-        {id:'col-magistrado',label:'Magistrado',  def:true},
-        {id:'col-promotor',  label:'Promotor',    def:true},
-        {id:'col-status',    label:'Status',      def:true},
+        {id:'col-magistrado',label:'Magistrado',  def:false},
+        {id:'col-promotor',  label:'Promotor',    def:false},
+        {id:'col-status',    label:'Status',      def:false},
         {id:'col-sala',      label:'Sala Virtual',def:false},
-        {id:'col-proj',      label:'PROJUDI',     def:true},
-        {id:'col-intm',      label:'Intimações',  def:true},
-        {id:'col-termo',     label:'Termos',      def:true},
-        {id:'col-pendencias',label:'Anotações',   def:true},
+        {id:'col-proj',      label:'PROJUDI',     def:false},
+        {id:'col-intm',      label:'Intimações',  def:false},
+        {id:'col-termo',     label:'Termos',      def:false},
+        {id:'col-pendencias',label:'Anotações',   def:false},
     ];
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center';

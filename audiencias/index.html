@@ -821,6 +821,7 @@
                 <input type="url" id="sala-input-link" placeholder="Link (https://...)" style="padding:0.45rem 0.65rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.85rem">
                 <input type="text" id="sala-input-horas" placeholder="Horários (ex: 08:00,09:00,10:00)" style="padding:0.45rem 0.65rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.85rem">
                 <button class="btn-cadastro-add" onclick="addSala()" style="width:100%;justify-content:center"><i class="fas fa-plus"></i> Adicionar Sala</button>
+                <button class="btn-cadastro-add" onclick="aplicarSalasAudiencias()" style="width:100%;justify-content:center;background:#1a2a6c;color:white;border-color:#1a2a6c"><i class="fas fa-wand-magic-sparkles"></i> Preencher salas nas audiências existentes</button>
             </div>
         </div>
         <div class="modal-footer">
@@ -2200,7 +2201,6 @@ function addSala() {
     document.getElementById('sala-input-link').value = '';
     document.getElementById('sala-input-horas').value = '';
     renderCadastroList();
-    aplicarSalasAudiencias();
     showToast('Sala cadastrada!', 'success');
 }
 
@@ -2218,7 +2218,6 @@ function editSala(i) {
     saveCadastros();
     renderCadastroList();
     buildSelectores();
-    aplicarSalasAudiencias();
     showToast('Sala atualizada!', 'success');
 }
 

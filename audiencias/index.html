@@ -768,6 +768,7 @@
                         <option value="Diligências complementares">Diligências complementares</option>
                         <option value="Acareação">Acareação</option>
                         <option value="Sentença em Audiência">Sentença em Audiência</option>
+                        <option value="Sentença Absolutória em Audiência">Sentença Absolutória em Audiência</option>
                     </select>
                 </div>
                 <div class="form-group full">
@@ -1360,7 +1361,7 @@ function getFiltered() {
 function statusClass(s) {
     if (!s) return 's-pendente';
     const sl = s.toLowerCase();
-    if (sl.includes('conclu') || (sl.includes('realiz') && !sl.includes('parc'))) return 's-realizada';
+    if (sl.includes('conclu') || (sl.includes('realiz') && !sl.includes('parc')) || sl.includes('absolut')) return 's-realizada';
     if (sl.includes('parc')) return 's-parcial';
     if (sl.includes('redesig')) return 's-redesignada';
     if (sl.includes('cancel')) return 's-cancelada';

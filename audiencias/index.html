@@ -529,6 +529,9 @@
             <button class="filter-btn" onclick="limparDatas()" title="Limpar datas" style="padding:0.5rem 0.7rem">
                 <i class="fas fa-xmark"></i>
             </button>
+            <button class="filter-btn" id="btn-hoje" onclick="filtrarHoje()" title="Mostrar audiências de hoje" style="font-weight:700">
+                <i class="fas fa-calendar-day"></i> Hoje
+            </button>
         </div>
         <select id="filter-status">
             <option value="">Todos os status</option>
@@ -1679,8 +1682,21 @@ document.getElementById('filter-status').addEventListener('change', e => { filte
 document.getElementById('filter-magistrado').addEventListener('change', e => { filterMagistrado = e.target.value; render(); });
 document.getElementById('filter-data-de').addEventListener('change',  e => { filterDataDe  = e.target.value; render(); });
 document.getElementById('filter-data-ate').addEventListener('change', e => { filterDataAte = e.target.value; render(); });
+function filtrarHoje() {
+    const hoje = new Date().toISOString().slice(0, 10);
+    filterDataDe = filterDataAte = hoje;
+    document.getElementById('filter-data-de').value = hoje;
+    document.getElementById('filter-data-ate').value = hoje;
+    document.getElementById('btn-hoje').style.background = '#1a2a6c';
+    document.getElementById('btn-hoje').style.color = 'white';
+    document.getElementById('btn-hoje').style.borderColor = '#1a2a6c';
+    render();
+}
+
 function limparDatas() {
     filterDataDe = filterDataAte = '';
+    const btn = document.getElementById('btn-hoje');
+    if (btn) { btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = ''; }
     document.getElementById('filter-data-de').value = '';
     document.getElementById('filter-data-ate').value = '';
     render();

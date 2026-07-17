@@ -550,7 +550,10 @@
         <button class="filter-btn" id="btn-preso-filter" onclick="togglePresFilter()">
             <i class="fas fa-handcuffs"></i> Réu Preso
         </button>
-<button class="filter-btn" onclick="gerarPDF()" style="background:#fff3cd;color:#92400e;border-color:#fcd34d;margin-left:auto">
+<button class="filter-btn" onclick="excluirSemDataHora()" style="background:#fdecea;color:#b91c1c;border-color:#fca5a5" title="Excluir todas as audiências sem data e hora">
+            <i class="fas fa-trash"></i> Excluir s/ data
+        </button>
+        <button class="filter-btn" onclick="gerarPDF()" style="background:#fff3cd;color:#92400e;border-color:#fcd34d;margin-left:auto">
             <i class="fas fa-file-pdf"></i> Exportar PDF
         </button>
     </div>
@@ -2046,6 +2049,23 @@ function saveAudiencia() {
     closeModal();
     render();
     showToast('Audiência salva!', 'success');
+}
+
+async function excluirSemDataHora() {
+    const alvo = audiencias.filter(a => !a.data && !a.hora);
+    if (!alvo.length) { showToast('Nenhuma audiência sem data e hora encontrada.', 'error'); return; }
+    if (!confirm(`Excluir ${alvo.length} audiência(s) sem data e hora? Esta ação não pode ser desfeita.`)) return;
+    const ids = alvo.map(a => a.id);
+    audiencias = audiencias.filter(a => a.data || a.hora);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(audiencias));
+    try {
+        await sb.from('audiencias').delete().in('id', ids);
+        showToast(`${ids.length} audiência(s) excluída(s).`, 'success');
+    } catch (e) {
+        console.error('Supabase delete error', e);
+        showToast('Erro ao excluir no banco: ' + e.message, 'error');
+    }
+    render();
 }
 
 function deleteAudiencia(id) {

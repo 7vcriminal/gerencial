@@ -65,6 +65,9 @@
         .stat-card.pendente { border-color: var(--blue); }
         .stat-card.cancelada { border-color: var(--red); }
         .stat-card.preso   { border-color: var(--secondary); }
+        .stat-card.sentenca { border-color: #0891b2; }
+        .stat-card.sentenca .stat-value { color: #0891b2; }
+        .stat-card.active-filter.sentenca { box-shadow: 0 0 0 3px #0891b2; }
         .stat-card.active-filter.total { box-shadow: 0 0 0 3px var(--primary); }
         .stat-card.active-filter.realizada { box-shadow: 0 0 0 3px var(--green); }
         .stat-card.active-filter.redesignada { box-shadow: 0 0 0 3px var(--yellow); }
@@ -444,6 +447,11 @@
             <div class="stat-value" id="s-cancelada">0</div>
             <div class="stat-hint">clique para filtrar</div>
         </div>
+        <div class="stat-card sentenca" onclick="filterByCard('sentenca')" title="Filtrar sentenças em audiência">
+            <div class="stat-label">Sent. em Audiência</div>
+            <div class="stat-value" id="s-sentenca">0</div>
+            <div class="stat-hint">clique para filtrar</div>
+        </div>
         <div class="stat-card preso" onclick="filterByCard('preso')" title="Filtrar réus presos">
             <div class="stat-label">Réus Presos</div>
             <div class="stat-value" id="s-preso">0</div>
@@ -612,6 +620,7 @@
         <div class="stat-card redesignada"><div class="stat-label">Redesignadas</div><div class="stat-value" id="r-redesignada">0</div></div>
         <div class="stat-card pendente"><div class="stat-label">Pendentes</div><div class="stat-value" id="r-pendente">0</div></div>
         <div class="stat-card cancelada"><div class="stat-label">Canceladas</div><div class="stat-value" id="r-cancelada">0</div></div>
+        <div class="stat-card sentenca"><div class="stat-label">Sent. em Audiência</div><div class="stat-value" id="r-sentenca">0</div></div>
         <div class="stat-card preso"><div class="stat-label">Réus Presos</div><div class="stat-value" id="r-preso">0</div></div>
     </div>
     <div class="charts-grid">
@@ -1318,7 +1327,9 @@ function getFiltered() {
         // card filter
         if (activeCard === 'realizada') {
             const s = (a.status||'').toLowerCase();
-            if (!(s.includes('conclu') || (s.includes('realiz') && !s.includes('parc')))) return false;
+            if (!(s.includes('conclu') || (s.includes('realiz') && !s.includes('parc')) || s.includes('sentença'))) return false;
+        } else if (activeCard === 'sentenca') {
+            if (!(a.status||'').toLowerCase().includes('sentença')) return false;
         } else if (activeCard === 'parcial') {
             if (!(a.status||'').toLowerCase().includes('parc')) return false;
         } else if (activeCard === 'redesignada') {
@@ -1377,7 +1388,8 @@ function fmtData(d) {
 function countStats(data) {
     return {
         total: data.filter(a => a.processo && !a.reservado && a.data && a.hora).length,
-        realizada: data.filter(a => { const s=(a.status||'').toLowerCase(); return s.includes('conclu')||(s.includes('realiz')&&!s.includes('parc')); }).length,
+        realizada: data.filter(a => { const s=(a.status||'').toLowerCase(); return s.includes('conclu')||(s.includes('realiz')&&!s.includes('parc'))||s.includes('sentença'); }).length,
+        sentenca:  data.filter(a => (a.status||'').toLowerCase().includes('sentença')).length,
         parcial:   data.filter(a => (a.status||'').toLowerCase().includes('parc')).length,
         redesignada: data.filter(a => (a.status||'').toLowerCase().includes('redesig')).length,
         pendente:  data.filter(a => !a.status && a.processo && !a.reservado && a.data && a.hora).length,
@@ -1454,12 +1466,13 @@ function updateStatsCards(prefix, data, previstas) {
     document.getElementById(`${prefix}-redesignada`).textContent = s.redesignada;
     document.getElementById(`${prefix}-pendente`).textContent = s.pendente;
     document.getElementById(`${prefix}-cancelada`).textContent = s.cancelada;
+    if (document.getElementById(`${prefix}-sentenca`)) document.getElementById(`${prefix}-sentenca`).textContent = s.sentenca;
     document.getElementById(`${prefix}-preso`).textContent = s.preso;
     if (document.getElementById(`${prefix}-slot`)) document.getElementById(`${prefix}-slot`).textContent = s.slot;
     // highlight active card
     if (prefix === 's') {
         document.querySelectorAll('#stats-grid .stat-card').forEach(c => c.classList.remove('active-filter'));
-        const map = {previstas:0,total:1,realizada:2,parcial:3,redesignada:4,pendente:5,cancelada:6,preso:7,slot:8};
+        const map = {previstas:0,total:1,realizada:2,parcial:3,redesignada:4,pendente:5,cancelada:6,sentenca:7,preso:8,slot:9};
         const idx = map[activeCard];
         if (idx !== undefined) {
             const cards = document.querySelectorAll('#stats-grid .stat-card');
@@ -2306,7 +2319,7 @@ function renderRelatorios() {
     data.forEach(a => {
         const s=(a.status||'').toLowerCase();
         if (!bm[a.mes]) return;
-        if (s.includes('conclu')||(s.includes('realiz')&&!s.includes('parc'))) bm[a.mes].realizada++;
+        if (s.includes('conclu')||(s.includes('realiz')&&!s.includes('parc'))||s.includes('sentença')) bm[a.mes].realizada++;
         else if (s.includes('parc')) bm[a.mes].parcial++;
         else if (s.includes('redesig')) bm[a.mes].redesignada++;
         else if (s.includes('cancel')) bm[a.mes].cancelada++;

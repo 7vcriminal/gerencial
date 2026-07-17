@@ -1684,12 +1684,19 @@ document.getElementById('filter-data-de').addEventListener('change',  e => { fil
 document.getElementById('filter-data-ate').addEventListener('change', e => { filterDataAte = e.target.value; render(); });
 function filtrarHoje() {
     const hoje = new Date().toISOString().slice(0, 10);
-    filterDataDe = filterDataAte = hoje;
-    document.getElementById('filter-data-de').value = hoje;
-    document.getElementById('filter-data-ate').value = hoje;
-    document.getElementById('btn-hoje').style.background = '#1a2a6c';
-    document.getElementById('btn-hoje').style.color = 'white';
-    document.getElementById('btn-hoje').style.borderColor = '#1a2a6c';
+    const ativo = filterDataDe === hoje && filterDataAte === hoje;
+    const btn = document.getElementById('btn-hoje');
+    if (ativo) {
+        filterDataDe = filterDataAte = '';
+        document.getElementById('filter-data-de').value = '';
+        document.getElementById('filter-data-ate').value = '';
+        btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = '';
+    } else {
+        filterDataDe = filterDataAte = hoje;
+        document.getElementById('filter-data-de').value = hoje;
+        document.getElementById('filter-data-ate').value = hoje;
+        btn.style.background = '#1a2a6c'; btn.style.color = 'white'; btn.style.borderColor = '#1a2a6c';
+    }
     render();
 }
 

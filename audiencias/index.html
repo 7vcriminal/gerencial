@@ -1651,7 +1651,16 @@ function setAno(ano) {
     if (currentView === 'agenda') render();
     else { buildYearTabs(); renderRelatorios(); }
 }
-function setMes(m) { currentMes = m; render(); }
+function setMes(m) {
+    currentMes = m;
+    render();
+    // sincroniza o select do modal de criar horários com o mês da aba
+    const qMes = document.getElementById('q-mes');
+    if (qMes && m !== 'Todos') {
+        qMes.value = m;
+        qMes.dispatchEvent(new Event('change'));
+    }
+}
 function setView(view) {
     currentView = view;
     document.getElementById('view-agenda').style.display     = view==='agenda'     ? '' : 'none';
@@ -1746,6 +1755,22 @@ function toggleLote() {
 document.getElementById('q-data').addEventListener('change', e => {
     const d = new Date(e.target.value + 'T12:00:00');
     if (!isNaN(d)) document.getElementById('q-mes').value = MESES[d.getMonth()];
+});
+
+document.getElementById('q-mes').addEventListener('change', e => {
+    const mesIdx = MESES.indexOf(e.target.value);
+    if (mesIdx < 0) return;
+    const ano = parseInt(document.getElementById('q-ano').value) || new Date().getFullYear();
+    const dataMin = `${ano}-${String(mesIdx + 1).padStart(2, '0')}-01`;
+    const dataInput = document.getElementById('q-data');
+    // só força a data se estiver vazia ou fora do mês selecionado
+    const atual = dataInput.value ? new Date(dataInput.value + 'T12:00:00') : null;
+    if (!atual || atual.getMonth() !== mesIdx) {
+        dataInput.value = dataMin;
+    }
+    dataInput.min = dataMin;
+    const ultimoDia = new Date(ano, mesIdx + 1, 0).getDate();
+    dataInput.max = `${ano}-${String(mesIdx + 1).padStart(2, '0')}-${ultimoDia}`;
 });
 
 function calcLoteHorarios() {

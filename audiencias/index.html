@@ -730,7 +730,7 @@
                 </div>
                 <div class="form-group">
                     <label>Hora</label>
-                    <input type="time" id="f-hora" onchange="autoSelecionarSalaPorHora()">
+                    <input type="time" id="f-hora" oninput="autoSelecionarSalaPorHora()" onchange="autoSelecionarSalaPorHora()">
                 </div>
                 <div class="form-group full">
                     <label>Nº do Processo</label>
@@ -1274,6 +1274,7 @@ async function reloadCadastros() {
         magistrados = (mags || []).map(m => ({nome: m.nome, ativo: m.ativo}));
         promotores = (pros || []).map(p => ({nome: p.nome, ativo: p.ativo}));
         salas = (sals || []).map(s => ({nome: s.nome, link: s.link, horas: s.horas || [], ativo: s.ativo !== false}));
+        sortSalas();
         localStorage.setItem(STORAGE_MAG, JSON.stringify(magistrados));
         localStorage.setItem(STORAGE_PRO, JSON.stringify(promotores));
         localStorage.setItem(STORAGE_SAL, JSON.stringify(salas));
@@ -2158,13 +2159,7 @@ function renderCadastroList() {
             document.getElementById('cadastro-list').innerHTML = `<p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1rem">Nenhuma sala cadastrada.</p>`;
             return;
         }
-        // índices ordenados pelo primeiro horário de cada sala
-        const idxOrdenados = salas.map((s, i) => i).sort((a, b) => {
-            const ha = salas[a].horas[0] || '99:99';
-            const hb = salas[b].horas[0] || '99:99';
-            return ha < hb ? -1 : ha > hb ? 1 : 0;
-        });
-        document.getElementById('cadastro-list').innerHTML = idxOrdenados.map(i => { const s = salas[i]; return `
+        document.getElementById('cadastro-list').innerHTML = salas.map((s, i) => `
             <div class="cadastro-item ${s.ativo?'':'inativo'}" id="cadastro-item-${i}">
                 <div style="flex:1;min-width:0">
                     <div style="font-weight:600;font-size:0.88rem">${s.nome}</div>
@@ -2178,7 +2173,7 @@ function renderCadastroList() {
                     </button>
                     <button class="btn-del" onclick="removeSala(${i})" title="Remover"><i class="fas fa-trash"></i></button>
                 </div>
-            </div>`; }).join('');
+            </div>`).join('');
         return;
     }
     const list = cadastroSection==='magistrados' ? magistrados : promotores;
@@ -2267,6 +2262,14 @@ function aplicarSalasAudiencias() {
     }
 }
 
+function sortSalas() {
+    salas.sort((a, b) => {
+        const ha = a.horas[0] || '99:99';
+        const hb = b.horas[0] || '99:99';
+        return ha < hb ? -1 : ha > hb ? 1 : 0;
+    });
+}
+
 function addSala() {
     const nome = document.getElementById('sala-input-nome').value.trim();
     const link = document.getElementById('sala-input-link').value.trim();
@@ -2275,6 +2278,7 @@ function addSala() {
     if (!link) { showToast('Informe o link da sala', 'error'); return; }
     const horas = horasRaw ? horasRaw.split(',').map(h => h.trim()).filter(Boolean) : [];
     salas.push({ nome, link, horas, ativo: true });
+    sortSalas();
     saveCadastros();
     document.getElementById('sala-input-nome').value = '';
     document.getElementById('sala-input-link').value = '';
@@ -2295,6 +2299,7 @@ function editSala(i) {
     salas[i].nome = novoNome.trim() || s.nome;
     salas[i].link = novoLink.trim() || s.link;
     salas[i].horas = novasHoras ? novasHoras.split(',').map(h => h.trim()).filter(Boolean) : [];
+    sortSalas();
     saveCadastros();
     renderCadastroList();
     buildSelectores();
@@ -2304,8 +2309,10 @@ function editSala(i) {
 function removeSala(i) {
     if (!confirm('Remover esta sala?')) return;
     salas.splice(i, 1);
+    sortSalas();
     saveCadastros();
     renderCadastroList();
+    buildSelectores();
 }
 
 function toggleSalaAtivo(i) {

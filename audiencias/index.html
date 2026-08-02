@@ -2161,17 +2161,28 @@ function renderCadastroList() {
         }
         document.getElementById('cadastro-list').innerHTML = salas.map((s, i) => `
             <div class="cadastro-item ${s.ativo?'':'inativo'}" id="cadastro-item-${i}">
-                <div style="flex:1;min-width:0">
-                    <div style="font-weight:600;font-size:0.88rem">${s.nome}</div>
-                    <div style="font-size:0.75rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.link}">${s.link || '— sem link —'}</div>
-                    <div style="font-size:0.72rem;color:#7c3aed;margin-top:2px">${s.horas.length ? s.horas.join(' · ') : '— sem horários —'}</div>
+                <div id="sala-view-${i}" style="display:flex;align-items:center;gap:0.5rem;width:100%">
+                    <div style="flex:1;min-width:0">
+                        <div style="font-weight:600;font-size:0.88rem">${s.nome}</div>
+                        <div style="font-size:0.75rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.link}">${s.link || '— sem link —'}</div>
+                        <div style="font-size:0.72rem;color:#7c3aed;margin-top:2px">${s.horas.length ? s.horas.join(' · ') : '— sem horários —'}</div>
+                    </div>
+                    <div class="cadastro-item-actions">
+                        <button class="btn-edit" onclick="abrirEditSala(${i})" title="Editar"><i class="fas fa-pen"></i></button>
+                        <button class="btn-edit" onclick="toggleSalaAtivo(${i})" title="${s.ativo?'Desativar':'Ativar'}">
+                            <i class="fas fa-${s.ativo?'eye-slash':'eye'}"></i>
+                        </button>
+                        <button class="btn-del" onclick="removeSala(${i})" title="Remover"><i class="fas fa-trash"></i></button>
+                    </div>
                 </div>
-                <div class="cadastro-item-actions">
-                    <button class="btn-edit" onclick="editSala(${i})" title="Editar"><i class="fas fa-pen"></i></button>
-                    <button class="btn-edit" onclick="toggleSalaAtivo(${i})" title="${s.ativo?'Desativar':'Ativar'}">
-                        <i class="fas fa-${s.ativo?'eye-slash':'eye'}"></i>
-                    </button>
-                    <button class="btn-del" onclick="removeSala(${i})" title="Remover"><i class="fas fa-trash"></i></button>
+                <div id="sala-edit-${i}" style="display:none;flex-direction:column;gap:0.4rem;width:100%;padding-top:0.3rem">
+                    <input type="text" id="sala-edit-nome-${i}" value="${s.nome.replace(/"/g,'&quot;')}" placeholder="Nome da sala" style="padding:0.4rem 0.6rem;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit">
+                    <input type="url" id="sala-edit-link-${i}" value="${(s.link||'').replace(/"/g,'&quot;')}" placeholder="Link (https://...)" style="padding:0.4rem 0.6rem;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit">
+                    <input type="text" id="sala-edit-horas-${i}" value="${s.horas.join(',')}" placeholder="Horários (ex: 08:00,09:00)" style="padding:0.4rem 0.6rem;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit">
+                    <div style="display:flex;gap:0.4rem">
+                        <button onclick="salvarEditSala(${i})" style="flex:1;padding:0.35rem;background:#1a2a6c;color:white;border:none;border-radius:8px;font-size:0.82rem;cursor:pointer"><i class="fas fa-check"></i> Salvar</button>
+                        <button onclick="cancelarEditSala(${i})" style="padding:0.35rem 0.7rem;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;font-size:0.82rem;cursor:pointer"><i class="fas fa-times"></i></button>
+                    </div>
                 </div>
             </div>`).join('');
         return;
@@ -2288,23 +2299,29 @@ function addSala() {
     showToast('Sala cadastrada!', 'success');
 }
 
-function editSala(i) {
-    const s = salas[i];
-    const novoNome = prompt('Nome da sala:', s.nome);
-    if (novoNome === null) return;
-    const novoLink = prompt('Link da sala:', s.link);
-    if (novoLink === null) return;
-    const novasHoras = prompt('Horários (separados por vírgula):', s.horas.join(','));
-    if (novasHoras === null) return;
-    salas[i].nome = novoNome.trim() || s.nome;
-    salas[i].link = novoLink.trim() || s.link;
-    salas[i].horas = novasHoras ? novasHoras.split(',').map(h => h.trim()).filter(Boolean) : [];
+function abrirEditSala(i) {
+    document.getElementById('sala-view-' + i).style.display = 'none';
+    document.getElementById('sala-edit-' + i).style.display = 'flex';
+}
+function cancelarEditSala(i) {
+    document.getElementById('sala-view-' + i).style.display = 'flex';
+    document.getElementById('sala-edit-' + i).style.display = 'none';
+}
+function salvarEditSala(i) {
+    const nome = document.getElementById('sala-edit-nome-' + i).value.trim();
+    const link = document.getElementById('sala-edit-link-' + i).value.trim();
+    const horasRaw = document.getElementById('sala-edit-horas-' + i).value.trim();
+    if (!nome) { showToast('Informe o nome da sala', 'error'); return; }
+    salas[i].nome = nome;
+    salas[i].link = link;
+    salas[i].horas = horasRaw ? horasRaw.split(',').map(h => h.trim()).filter(Boolean) : [];
     sortSalas();
     saveCadastros();
     renderCadastroList();
     buildSelectores();
     showToast('Sala atualizada!', 'success');
 }
+function editSala(i) { abrirEditSala(i); }
 
 function removeSala(i) {
     if (!confirm('Remover esta sala?')) return;

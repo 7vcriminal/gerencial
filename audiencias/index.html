@@ -1140,6 +1140,7 @@ function toSupabaseRow(a) {
         processo: a.processo, reu: a.reu, magistrado: a.magistrado, promotor: a.promotor,
         status: a.status, pendencias: a.pendencias, observacoes: a.observacoes,
         reu_preso: !!a.reuPreso, reus_preso: a.reusPreso || [],
+        reu_revel: !!a.reuRevel, reus_revel: a.reusRevel || [],
         projudi: !!a.projudi, intimacoes: !!a.intimacoes, termo: !!a.termo,
         reservado: !!a.reservado,
         prio_idoso: !!a.prioIdoso, prio_hediondo: !!a.prioHediondo,
@@ -1154,6 +1155,7 @@ function fromSupabaseRow(r) {
         processo: r.processo, reu: r.reu, magistrado: r.magistrado, promotor: r.promotor,
         status: r.status, pendencias: r.pendencias, observacoes: r.observacoes,
         reuPreso: r.reu_preso, reusPreso: r.reus_preso || [],
+        reuRevel: r.reu_revel, reusRevel: r.reus_revel || [],
         projudi: r.projudi, intimacoes: r.intimacoes, termo: r.termo,
         reservado: !!r.reservado,
         prioIdoso: !!r.prio_idoso, prioHediondo: !!r.prio_hediondo,
@@ -1513,7 +1515,7 @@ function renderTable(filtered) {
             <td style="text-align:center;color:var(--muted);font-size:0.78rem;font-weight:600">${idx+1}</td>
             <td class="data">${fmtData(a.data)}${showAno?`<br><small style="color:var(--muted)">${a.ano||2026}</small>`:''}</td>
             <td class="hora">${a.hora||'--:--'}</td>
-            <td class="reu">${a.reservado ? '<span class="reu-nome" style="color:#c2540a;font-weight:700"><i class="fas fa-lock"></i> RESERVADO REU PRESO</span>' : (slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu ? a.reu.split(' / ').map((n, i) => { const preso = a.reusPreso ? a.reusPreso[i] : (a.reuPreso && i===0); const presoIcon = preso ? '<i class="fas fa-handcuffs" title="Réu Preso" style="color:var(--red)"></i>' : ''; const badges = presoIcon + (i===0 ? prioBadges : ''); return `<span class="reu-nome" ${preso?'style="color:var(--red)"':''}>${n}${badges ? `<span class="prio-badges" style="flex-shrink:0">${badges}</span>` : ''}</span>`; }).join('') : '—'))}</td>
+            <td class="reu">${a.reservado ? '<span class="reu-nome" style="color:#c2540a;font-weight:700"><i class="fas fa-lock"></i> RESERVADO REU PRESO</span>' : (slot ? '<span class="slot-badge"><i class="fas fa-clock"></i> Preencher</span>' : (a.reu ? a.reu.split(' / ').map((n, i) => { const preso = a.reusPreso ? a.reusPreso[i] : (a.reuPreso && i===0); const revel = a.reusRevel ? a.reusRevel[i] : (a.reuRevel && i===0); const presoIcon = preso ? '<i class="fas fa-handcuffs" title="Réu Preso" style="color:var(--red)"></i>' : ''; const revelIcon = revel ? '<i class="fas fa-user-slash" title="Réu Revel" style="color:#b45309"></i>' : ''; const badges = presoIcon + revelIcon + (i===0 ? prioBadges : ''); return `<span class="reu-nome" ${preso?'style="color:var(--red)"':''}>${n}${badges ? `<span class="prio-badges" style="flex-shrink:0">${badges}</span>` : ''}</span>`; }).join('') : '—'))}</td>
             <td class="processo">${a.processo||'<span style="color:#cbd5e0;font-style:italic">— aguardando —</span>'}</td>
             <td class="magistrado">${a.magistrado||'—'}</td>
             <td class="promotor" style="font-size:0.8rem;color:var(--muted)">${a.promotor||'—'}</td>
@@ -1952,7 +1954,7 @@ function maskProcesso(el) {
     el.value = r;
 }
 
-function adicionarLinhaReuEdit(valor, preso) {
+function adicionarLinhaReuEdit(valor, preso, revel) {
     const div = document.createElement('div');
     div.className = 'reu-row';
     div.innerHTML = `<input type="text" class="reu-input" value="${valor||''}" placeholder="Nome completo do réu" style="flex:1">
@@ -1960,10 +1962,14 @@ function adicionarLinhaReuEdit(valor, preso) {
             <input type="checkbox" class="reu-preso-check" ${preso?'checked':''} style="accent-color:var(--red)">
             <i class="fas fa-handcuffs" style="color:var(--red);font-size:0.7rem"></i>
         </label>
+        <label style="display:flex;align-items:center;gap:3px;font-size:0.78rem;white-space:nowrap;cursor:pointer">
+            <input type="checkbox" class="reu-revel-check" ${revel?'checked':''} style="accent-color:#b45309">
+            <i class="fas fa-user-slash" style="color:#b45309;font-size:0.7rem"></i>
+        </label>
         <button type="button" onclick="this.parentElement.remove()" class="btn-del" style="padding:0.25rem 0.5rem;font-size:0.8rem"><i class="fas fa-times"></i></button>`;
     document.getElementById('f-reus-list').appendChild(div);
 }
-function addReuRowEdit() { adicionarLinhaReuEdit('', false); }
+function addReuRowEdit() { adicionarLinhaReuEdit('', false, false); }
 
 // ─── CRUD MODAL ──────────────────────────────────────────────────────────────
 
@@ -1985,7 +1991,8 @@ function openModal(id, force) {
     const fReusList = document.getElementById('f-reus-list');
     fReusList.innerHTML = '';
     const reusPreso = a.reusPreso || (a.reuPreso ? [true] : []);
-    (a.reu ? a.reu.split(' / ') : ['']).forEach((r, i) => adicionarLinhaReuEdit(r, reusPreso[i]||false));
+    const reusRevel = a.reusRevel || (a.reuRevel ? [true] : []);
+    (a.reu ? a.reu.split(' / ') : ['']).forEach((r, i) => adicionarLinhaReuEdit(r, reusPreso[i]||false, reusRevel[i]||false));
     document.getElementById('f-reservado').checked = !!a.reservado;
     setReservadoLock('f', !!a.reservado);
     setPrioridades('f', a);
@@ -2047,6 +2054,8 @@ function saveAudiencia() {
         observacoes: document.getElementById('f-observacoes').value.trim(),
         reusPreso: (() => { const reuRows = Array.from(document.querySelectorAll('#f-reus-list .reu-row')); return reuRows.filter(r => r.querySelector('.reu-input').value.trim()).map(r => r.querySelector('.reu-preso-check')?.checked || false); })(),
         reuPreso: (() => { const reuRows = Array.from(document.querySelectorAll('#f-reus-list .reu-row')); return reuRows.filter(r => r.querySelector('.reu-input').value.trim()).some(r => r.querySelector('.reu-preso-check')?.checked || false); })(),
+        reusRevel: (() => { const reuRows = Array.from(document.querySelectorAll('#f-reus-list .reu-row')); return reuRows.filter(r => r.querySelector('.reu-input').value.trim()).map(r => r.querySelector('.reu-revel-check')?.checked || false); })(),
+        reuRevel: (() => { const reuRows = Array.from(document.querySelectorAll('#f-reus-list .reu-row')); return reuRows.filter(r => r.querySelector('.reu-input').value.trim()).some(r => r.querySelector('.reu-revel-check')?.checked || false); })(),
         projudi: document.getElementById('f-projudi').checked,
         intimacoes: document.getElementById('f-intimacoes').checked,
         termo: document.getElementById('f-termo').checked,

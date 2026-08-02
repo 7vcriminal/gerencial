@@ -730,7 +730,7 @@
                 </div>
                 <div class="form-group">
                     <label>Hora</label>
-                    <input type="time" id="f-hora">
+                    <input type="time" id="f-hora" onchange="autoSelecionarSalaPorHora()">
                 </div>
                 <div class="form-group full">
                     <label>Nº do Processo</label>
@@ -2024,6 +2024,13 @@ function openModal(id, force) {
 }
 function closeModal() { document.getElementById('form-modal').classList.remove('open'); }
 
+function autoSelecionarSalaPorHora() {
+    const hora = document.getElementById('f-hora').value;
+    if (!hora) return;
+    const sala = salas.find(s => s.ativo && s.horas.includes(hora));
+    if (sala) document.getElementById('f-sala').value = sala.link;
+}
+
 async function replicarCampoDia(campo, selectId, checkId) {
     const checkbox = document.getElementById(checkId);
     if (!checkbox.checked) return;
@@ -2273,6 +2280,7 @@ function addSala() {
     document.getElementById('sala-input-link').value = '';
     document.getElementById('sala-input-horas').value = '';
     renderCadastroList();
+    buildSelectores();
     showToast('Sala cadastrada!', 'success');
 }
 

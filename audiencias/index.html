@@ -116,8 +116,8 @@
         .preencher-info-value { font-size: 0.95rem; font-weight: 600; color: var(--text); }
         .reus-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem; }
         .reu-row { display: flex; gap: 0.5rem; align-items: center; }
-        .reu-row input { flex: 1; padding: 0.55rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text); transition: var(--transition); }
-        .reu-row input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,42,108,0.1); }
+        .reu-row .reu-input { flex: 1; padding: 0.55rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text); transition: var(--transition); }
+        .reu-row .reu-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,42,108,0.1); }
         .btn-rem-reu { background: #fdecea; color: var(--red); border: none; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 0.8rem; flex-shrink: 0; transition: var(--transition); }
         .btn-rem-reu:hover { background: var(--red); color: white; }
         .btn-add-reu { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.9rem; border-radius: 8px; background: white; color: var(--primary); border: 1px dashed var(--primary); font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
@@ -1850,7 +1850,7 @@ function openPreencher(id) {
 
 function closePreencher() { document.getElementById('preencher-modal').classList.remove('open'); }
 
-function adicionarLinhaReu(valor, preso) {
+function adicionarLinhaReu(valor, preso, revel) {
     const lista = document.getElementById('reus-list');
     const div = document.createElement('div');
     div.className = 'reu-row';
@@ -1859,11 +1859,15 @@ function adicionarLinhaReu(valor, preso) {
             <input type="checkbox" class="reu-preso-check" ${preso?'checked':''} style="accent-color:var(--red)">
             <i class="fas fa-handcuffs" style="color:var(--red);font-size:0.7rem"></i>
         </label>
+        <label style="display:flex;align-items:center;gap:3px;font-size:0.78rem;white-space:nowrap;cursor:pointer">
+            <input type="checkbox" class="reu-revel-check" ${revel?'checked':''} style="accent-color:#b45309">
+            <i class="fas fa-user-slash" style="color:#b45309;font-size:0.7rem"></i>
+        </label>
         <button type="button" onclick="this.parentElement.remove()" class="btn-del" style="padding:0.25rem 0.5rem;font-size:0.8rem"><i class="fas fa-times"></i></button>`;
     lista.appendChild(div);
 }
 
-function addReuRow() { adicionarLinhaReu('', false); }
+function addReuRow() { adicionarLinhaReu('', false, false); }
 
 function removerLinhaReu(btn) {
     const lista = document.getElementById('reus-list');
@@ -1878,12 +1882,15 @@ function salvarPreencher() {
     const reuInputs = Array.from(document.querySelectorAll('#reus-list .reu-row'));
     const reus = reuInputs.map(row => row.querySelector('.reu-input').value.trim()).filter(Boolean);
     const reusPreso = reuInputs.filter(row => row.querySelector('.reu-input').value.trim()).map(row => row.querySelector('.reu-preso-check')?.checked || false);
+    const reusRevel = reuInputs.filter(row => row.querySelector('.reu-input').value.trim()).map(row => row.querySelector('.reu-revel-check')?.checked || false);
     const a = audiencias.find(x => x.id === id);
     if (!a) return;
     a.processo = processo;
     a.reu = reus.join(' / ');
     a.reusPreso = reusPreso;
     a.reuPreso = reusPreso.some(Boolean);
+    a.reusRevel = reusRevel;
+    a.reuRevel = reusRevel.some(Boolean);
     a.reservado = document.getElementById('p-reservado').checked;
     Object.assign(a, getPrioridades('p'));
     saveData([a]);
@@ -1908,12 +1915,12 @@ function toggleReservado(prefix) {
     document.getElementById(listId).innerHTML = '';
     if (checked) {
         processoInput.value = 'RESERVADO REU PRESO';
-        if (prefix === 'p') adicionarLinhaReu('RESERVADO REU PRESO', true);
-        else adicionarLinhaReuEdit('RESERVADO REU PRESO', true);
+        if (prefix === 'p') adicionarLinhaReu('RESERVADO REU PRESO', true, false);
+        else adicionarLinhaReuEdit('RESERVADO REU PRESO', true, false);
     } else {
         processoInput.value = '';
-        if (prefix === 'p') adicionarLinhaReu('', false);
-        else adicionarLinhaReuEdit('', false);
+        if (prefix === 'p') adicionarLinhaReu('', false, false);
+        else adicionarLinhaReuEdit('', false, false);
     }
     setReservadoLock(prefix, checked);
 }

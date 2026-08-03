@@ -146,7 +146,8 @@
         .mes-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
 
         /* TABLE */
-        .table-wrapper { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
+        .table-wrapper { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow-x: auto; overflow-y: visible; -webkit-overflow-scrolling: touch; }
+        .table-wrapper table { min-width: 900px; }
         .table-info { padding: 0.75rem 1.5rem; font-size: 0.82rem; color: var(--muted); border-bottom: 1px solid #f0f4f8; display: flex; justify-content: space-between; align-items: center; }
         table { width: 100%; border-collapse: collapse; }
         thead th { background: #f8fafc; padding: 0.7rem 0.8rem; text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; cursor: pointer; user-select: none; }
@@ -170,8 +171,11 @@
         tbody tr.reservado-row td.hora,
         tbody tr.reservado-row td.reu .reu-nome { color: #c2540a; font-weight: 700; }
         td { padding: 0.4rem 0.55rem; font-size: 0.74rem; color: var(--text); vertical-align: middle; }
-        td.processo { font-size: 0.74rem; font-weight: 700; color: var(--text); white-space: nowrap; }
-        td.hora, td.data { white-space: nowrap; text-align: center; }
+        td.processo { font-size: 0.74rem; font-weight: 700; color: var(--text); white-space: nowrap; min-width: 160px; }
+        td.hora, td.data { white-space: nowrap; text-align: center; min-width: 54px; }
+        td.magistrado, td.promotor { min-width: 110px; }
+        td.status-cell { min-width: 110px; }
+        td.reu { min-width: 160px; }
         td.data { font-weight: 700; }
         td.hora { font-weight: 600; }
         td.status-cell { text-align: center; }
@@ -299,7 +303,6 @@
         @media (max-width: 1024px) {
             .stats-grid { grid-template-columns: repeat(5, 1fr); gap: 0.6rem; }
             .toolbar select, .toolbar .filter-btn { flex: 1 1 calc(33% - 0.5rem); min-width: 0; }
-            .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
             .modal { max-width: 92vw; }
             .charts-grid { grid-template-columns: 1fr; }
             .chart-card--wide { grid-column: 1; }

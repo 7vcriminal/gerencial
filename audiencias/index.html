@@ -2,7 +2,10 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>Audiências - 7ª Vara Criminal</title>
     <link rel="icon" type="image/png" href="../logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -292,57 +295,103 @@
 
         button, .btn, .btn-edit, .btn-del, .btn-save, .btn-cancel-modal, .filter-btn, .view-btn, .mes-tab, .year-tab { -webkit-tap-highlight-color: transparent; }
 
-        @media (max-width: 768px) {
-            body { padding: 0.75rem; }
-            .header { padding: 1rem; }
-            .header h1 { font-size: 1.1rem; }
-            .btn-logout { position: static; padding: 0.4rem 0.7rem; }
-            .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
-            .stat-value { font-size: 1.4rem; }
-            .stat-hint { display: none; }
-            table { font-size: 0.8rem; }
-            td { padding: 0.5rem 0.5rem; }
-            td.processo, th:nth-child(5), td:nth-child(5) { display: none; }
-            th:nth-child(9), td:nth-child(9), th:nth-child(10), td:nth-child(10) { display: none; }
-            .form-grid { grid-template-columns: 1fr; }
-            .detail-grid { grid-template-columns: 1fr; }
+        /* ── TABLET (≤1024px) ─────────────────────────────────────────── */
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(5, 1fr); gap: 0.6rem; }
+            .toolbar select, .toolbar .filter-btn { flex: 1 1 calc(33% - 0.5rem); min-width: 0; }
+            .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .modal { max-width: 92vw; }
             .charts-grid { grid-template-columns: 1fr; }
             .chart-card--wide { grid-column: 1; }
-            .nav-bar { flex-direction: column; align-items: flex-start; }
-            .lote-fields { flex-direction: column; }
-            .lf input, .lf select { min-width: unset; width: 100%; }
-            .lote-fields select, .lote-fields input { width: 100%; }
-            .btn-gerar, .btn-preview { width: 100%; justify-content: center; }
-            .preencher-info { gap: 0.75rem; }
-
-            /* TOOLBAR: filtros ocupam metade/total da largura */
-            .toolbar { gap: 0.6rem; }
-            .toolbar .search-box { flex: 1 1 100%; min-width: 0; }
-            .toolbar select, .toolbar .filter-btn { flex: 1 1 calc(50% - 0.3rem); min-width: 0; }
-            .toolbar button[onclick="gerarPDF()"] { flex: 1 1 100%; margin-left: 0 !important; justify-content: center; }
-
-            /* TABELA: rolagem horizontal */
-            .table-wrapper { overflow-x: auto; }
-            .table-wrapper table { min-width: 640px; }
-
-            /* MODAIS: quase tela cheia */
-            .modal { max-width: 96vw; }
-            .modal-body { padding: 1rem; }
-
-            /* TOQUE: alvo mínimo de toque */
-            .btn-edit, .btn-del { min-height: 36px; min-width: 36px; padding: 0.4rem 0.7rem; }
-
-            /* ABAS DE MÊS/ANO: rolagem horizontal sem quebra forçada */
-            .mes-tabs, .year-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 0.25rem; }
-            .mes-tab, .year-tab { flex-shrink: 0; }
         }
 
-        @media (max-width: 1024px) and (min-width: 769px) {
-            .stats-grid { grid-template-columns: repeat(4, 1fr); }
-            .toolbar select, .toolbar .filter-btn { flex: 1 1 calc(33% - 0.5rem); }
-            .table-wrapper { overflow-x: auto; }
-            .form-grid { grid-template-columns: 1fr 1fr; }
-            .modal { max-width: 90vw; }
+        /* ── MOBILE LARGO (≤768px) ────────────────────────────────────── */
+        @media (max-width: 768px) {
+            body { padding: 0.6rem; }
+
+            /* Cabeçalho compacto */
+            .header { padding: 0.75rem 1rem; gap: 0.5rem; }
+            .header h1 { font-size: 1rem; }
+            .header p { display: none; }
+            .logo-header { max-height: 32px; }
+            .header-back span, .btn-logout span, .header-back { display: none; }
+            .header-actions { gap: 0.4rem; }
+            .btn-profile { padding: 0.3rem; border-radius: 50%; }
+            #header-profile-name { display: none; }
+
+            /* Nav bar empilhada */
+            .nav-bar { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+            .nav-right { justify-content: space-between; }
+            .year-tabs, .mes-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 0.2rem; scrollbar-width: none; }
+            .year-tabs::-webkit-scrollbar, .mes-tabs::-webkit-scrollbar { display: none; }
+            .year-tab, .mes-tab { flex-shrink: 0; font-size: 0.78rem; padding: 0.3rem 0.8rem; }
+            .btn-config { font-size: 0.78rem; padding: 0.35rem 0.65rem; }
+
+            /* Cards de estatística: 3 por linha */
+            .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+            .stat-card { padding: 0.6rem 0.5rem; }
+            .stat-label { font-size: 0.68rem; }
+            .stat-value { font-size: 1.3rem; }
+            .stat-hint { display: none; }
+
+            /* Toolbar: busca em cima, filtros embaixo */
+            .toolbar { gap: 0.5rem; }
+            .toolbar .search-box { flex: 1 1 100%; min-width: 0; }
+            .toolbar select { flex: 1 1 calc(50% - 0.25rem); min-width: 0; font-size: 0.8rem; }
+            .toolbar .filter-btn { flex: 1 1 calc(50% - 0.25rem); min-width: 0; font-size: 0.8rem; }
+            .toolbar button[onclick="gerarPDF()"],
+            .toolbar button[onclick="filtrarHoje()"] { flex: 1 1 calc(50% - 0.25rem); margin-left: 0 !important; justify-content: center; font-size: 0.8rem; }
+            #btn-hoje { flex: 0 0 auto; }
+
+            /* Tabela: scroll horizontal, colunas secundárias ocultas */
+            .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
+            .table-wrapper table { min-width: 520px; font-size: 0.78rem; }
+            td, th { padding: 0.45rem 0.4rem; }
+            /* Oculta: magistrado, promotor, toggles PROJUDI/Intim/Termo */
+            th:nth-child(6), td:nth-child(6),
+            th:nth-child(7), td:nth-child(7),
+            th:nth-child(9), td:nth-child(9),
+            th:nth-child(10), td:nth-child(10),
+            th:nth-child(11), td:nth-child(11) { display: none; }
+
+            /* Modais: tela cheia no mobile */
+            .modal-overlay { align-items: flex-end; padding: 0; }
+            .modal {
+                max-width: 100vw; width: 100vw;
+                max-height: 94vh; border-radius: 16px 16px 0 0;
+                margin: 0;
+            }
+            .modal-header { border-radius: 16px 16px 0 0; position: sticky; top: 0; z-index: 1; }
+            .modal-body { padding: 0.85rem 1rem; }
+            .modal-footer { position: sticky; bottom: 0; background: white; z-index: 1; padding: 0.75rem 1rem; border-top: 1px solid #e2e8f0; }
+            .form-grid { grid-template-columns: 1fr; gap: 0.7rem; }
+            .form-grid .full { grid-column: 1; }
+            .detail-grid { grid-template-columns: 1fr; }
+
+            /* Lote de horários */
+            .lote-fields { flex-direction: column; gap: 0.5rem; }
+            .lf { width: 100%; }
+            .lf input, .lf select { width: 100%; min-width: unset; }
+            .btn-gerar, .btn-preview { width: 100%; justify-content: center; }
+
+            /* Alvo de toque maior */
+            .btn-edit, .btn-del { min-height: 38px; min-width: 38px; }
+            .toggle-pill { min-height: 28px; font-size: 0.72rem; }
+
+            /* Charts */
+            .charts-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+            .chart-card--wide { grid-column: 1; }
+        }
+
+        /* ── MOBILE PEQUENO (≤480px) ──────────────────────────────────── */
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stat-value { font-size: 1.2rem; }
+            /* Oculta também processo na tabela */
+            th:nth-child(5), td:nth-child(5) { display: none; }
+            .table-wrapper table { min-width: 360px; }
+            .header h1 { font-size: 0.9rem; }
+            .view-btn { font-size: 0.75rem; padding: 0.35rem 0.6rem; }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
